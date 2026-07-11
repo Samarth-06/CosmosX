@@ -88,10 +88,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         property: "og:description",
         content:
-          "Learn blockchain visually through interactive simulations before making your first real transaction on Stellar Mainnet.",
+          "CosmosX is an immersive interactive learning platform that teaches blockchain through cinematic 3D simulations of our solar system, before your first real Stellar transaction.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "CosmosX — Master Blockchain by Exploring the Solar System" },
+      { name: "twitter:description", content: "CosmosX is an immersive interactive learning platform that teaches blockchain through cinematic 3D simulations of our solar system, before your first real Stellar transaction." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/tZWBRbLgYFMTm2tctDyVxnV21l43/social-images/social-1783756701459-7f1c258e-4341-4c15-8093-3fb41d45c813.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/tZWBRbLgYFMTm2tctDyVxnV21l43/social-images/social-1783756701459-7f1c258e-4341-4c15-8093-3fb41d45c813.webp" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
