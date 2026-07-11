@@ -32,7 +32,7 @@ export default function HeroContent() {
           </p>
 
           <div className="mt-9 flex flex-wrap items-center gap-3">
-            <button className="group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary via-primary-glow to-secondary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-[0_0_40px_-8px_var(--color-primary)] transition hover:shadow-[0_0_60px_-6px_var(--color-secondary)]">
+            <button className="group inline-flex items-center gap-2 rounded-full bg-linear-to-r from-primary via-primary-glow to-secondary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-[0_0_40px_-8px_var(--color-primary)] transition hover:shadow-[0_0_60px_-6px_var(--color-secondary)]">
               <Play className="h-4 w-4 fill-current" />
               Begin Journey
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -71,7 +71,7 @@ export default function HeroContent() {
         transition={{ delay: 1.4, duration: 1 }}
         className="pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 text-center"
       >
-        <div className="mx-auto h-8 w-[1px] bg-gradient-to-b from-transparent via-white/40 to-transparent" />
+        <div className="mx-auto h-8 w-[1px] bg-linear-to-b from-transparent via-white/40 to-transparent" />
         <p className="mt-2 text-[10px] font-medium uppercase tracking-[0.25em] text-muted-foreground">
           Scroll to launch
         </p>
@@ -98,7 +98,7 @@ function DashboardCard() {
   return (
     <div className="glass-strong relative overflow-hidden rounded-3xl p-5 sm:p-6">
       {/* subtle top gradient */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-white/25 to-transparent" />
 
       <div className="flex items-center justify-between">
         <div>
@@ -108,7 +108,7 @@ function DashboardCard() {
           <div className="mt-1 font-display text-lg font-semibold">Nova · Level 07</div>
         </div>
         <div className="relative">
-          <div className="h-11 w-11 rounded-full bg-gradient-to-br from-secondary to-primary p-[2px]">
+          <div className="h-11 w-11 rounded-full bg-linear-to-br from-secondary to-primary p-[2px]">
             <div className="flex h-full w-full items-center justify-center rounded-full bg-surface text-sm font-semibold">
               N
             </div>
@@ -125,7 +125,7 @@ function DashboardCard() {
         </div>
         <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/8">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-primary via-secondary to-accent"
+            className="h-full rounded-full bg-linear-to-r from-primary via-secondary to-accent"
             style={{ width: "42%" }}
           />
         </div>

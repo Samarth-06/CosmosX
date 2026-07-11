@@ -26,7 +26,7 @@ export default function PlanetTooltip({ id }: { id: string | null }) {
             <div className="mt-2 flex items-center justify-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground/80">
               <div className="h-1 w-24 overflow-hidden rounded-full bg-white/10">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-primary to-secondary"
+                  className="h-full rounded-full bg-linear-to-r from-primary to-secondary"
                   style={{ width: `${planet.completion}%` }}
                 />
               </div>

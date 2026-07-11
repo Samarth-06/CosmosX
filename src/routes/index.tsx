@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, Suspense } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Canvas } from "@react-three/fiber";
 
 import Nav from "@/components/Nav";
@@ -7,6 +7,7 @@ import HeroContent from "@/components/HeroContent";
 import SolarSystem from "@/components/SolarSystem";
 import PlanetTooltip from "@/components/PlanetTooltip";
 import { PLANETS } from "@/lib/planets";
+import { getMercuryCompletion } from "@/lib/module1-store";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -52,6 +53,7 @@ function Index() {
               scrollProgress={scrollProgress}
               hoveredPlanet={hovered}
               setHoveredPlanet={setHovered}
+              activePlanetIdx={activeIdx}
               onPlanetClick={(id) => {
                 const idx = PLANETS.findIndex((p) => p.id === id);
                 if (idx < 0) return;
@@ -66,8 +68,8 @@ function Index() {
 
         {/* Vignette + top/bottom fade for legibility */}
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(4,8,22,0.55)_100%)]" />
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-background/70 to-transparent" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-background/70 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-linear-to-b from-background/70 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-linear-to-t from-background/70 to-transparent" />
       </div>
 
       <Nav />
@@ -103,6 +105,16 @@ function PlanetChapter({
   total: number;
 }) {
   const num = String(index + 1).padStart(2, "0");
+  const [completion, setCompletion] = useState(planet.completion);
+
+  useEffect(() => {
+    if (planet.id === "mercury") {
+      setCompletion(getMercuryCompletion());
+    }
+  }, [planet.id]);
+
+  const isUnlocked = planet.id === "mercury";
+
   return (
     <section className="relative flex min-h-screen items-end px-4 pb-20 sm:px-8 lg:px-14">
       <div className="pointer-events-none mx-auto flex w-full max-w-7xl items-end justify-between gap-8">
@@ -125,12 +137,24 @@ function PlanetChapter({
               {planet.time}
             </span>
             <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
-              {planet.completion}% complete
+              {completion}% complete
             </span>
           </div>
-          <button className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-primary-glow px-5 py-2.5 text-xs font-semibold text-primary-foreground shadow-[0_0_30px_-8px_var(--color-primary)] transition hover:shadow-[0_0_40px_-4px_var(--color-primary)]">
-            Enter {planet.name}
-          </button>
+          {isUnlocked ? (
+            <Link
+              to="/planets/mercury"
+              className="mt-6 inline-flex items-center gap-2 rounded-full bg-linear-to-r from-primary to-primary-glow px-5 py-2.5 text-xs font-semibold text-primary-foreground shadow-[0_0_30px_-8px_var(--color-primary)] transition hover:shadow-[0_0_40px_-4px_var(--color-primary)] cursor-pointer"
+            >
+              Enter {planet.name}
+            </Link>
+          ) : (
+            <button
+              disabled
+              className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-5 py-2.5 text-xs font-semibold text-muted-foreground cursor-not-allowed opacity-60"
+            >
+              Planet Locked
+            </button>
+          )}
         </div>
       </div>
     </section>
