@@ -37,6 +37,7 @@ export interface ModuleDef {
   angle: number;
   description: string;
   rocketComponent: string;
+  moduleTheory: string;
   tasks: TaskDef[];
 }
 
@@ -51,6 +52,7 @@ export const MERCURY_CURRICULUM: ModuleDef[] = [
     angle: -90,
     rocketComponent: "ðŸ§± Launch Platform",
     description: "Audit centralized command routing database to isolate systemic vulnerabilities and discover why decentralization is required.",
+    moduleTheory: "Traditional systems lean on a single trusted authority. Banks, governments and apps all use centralized databases such as MySQL or PostgreSQL. When that one controller is honest, the system is fast, cheap and dependable. When it is not — when it fails, attacks, or quietly edits records — every participant is exposed. This module shows what goes wrong, why a single source of truth is fragile, and why distributed records can reduce blind trust in a central authority.",
     tasks: [] // Module 1 is handled by the existing custom React components
   },
   {
@@ -63,6 +65,7 @@ export const MERCURY_CURRICULUM: ModuleDef[] = [
     angle: -45,
     rocketComponent: "â›½ Fuel Tank",
     description: "Examine transaction payloads, audit append-only digital ledgers, trace the transaction lifecycle, and act as a mempool gatekeeper.",
+    moduleTheory: "A transaction is a signed message that requests a state change on a shared ledger. Unlike a bank, blockchains do not store account balances — they store every transfer that ever happened. Balances are recomputed by replaying the append-only history. Each transaction must clear three gates: sufficient balance, valid signature, and correct sequence. In this module you will dissect a transaction, audit an append-only ledger, and act as the gatekeeper who keeps the network clean.",
     tasks: [
       {
         id: "task2_1",
@@ -131,43 +134,6 @@ export const MERCURY_CURRICULUM: ModuleDef[] = [
             { label: "Sequence Code", placeholder: "6-letter code e.g. DAFEBC", key: "seq" }
           ]
         }
-      },
-      {
-        id: "task2_4",
-        title: "Task 2.4 â€” Valid vs. Invalid Transactions",
-        concept: "Preventing double-spending",
-        theoryText: "To keep the ledger clean, every node evaluates pending transactions against strict validation rules:\n\n1. Sufficient Balance: Does the sender have enough funds to cover the amount + fee?\n2. Authentic Signature: Is the signature valid for the source public key?\n3. Correct Sequence: Is the order correct to prevent replay attacks?\n\nDouble Spending occurs when a user tries to spend the same funds twice simultaneously. Blockchain nodes reject the duplicate transaction due to insufficient balance or sequence rules.",
-        practical: {
-          type: "validator-terminal",
-          title: "Mempool Gatekeeper Terminal",
-          setupText: "Current Account Balances:\n- G_ALPHA: 100 Oxygen\n- G_BETA: 20 Oxygen\n- G_GAMMA: 5 Oxygen\n\nPending Queue:\n1. G_ALPHA sends 95 to G_BETA (Fee: 2) -> Total 97. (Alpha balance is 100)\n2. G_GAMMA sends 10 to G_ALPHA (Fee: 1) -> Total 11. (Gamma balance is 5)\n3. G_BETA sends 20 to G_GAMMA (Fee: 1) -> Total 21. (Beta balance is 20)\n4. G_BETA sends 15 to G_ALPHA (Fee: 1) -> Total 16. (Beta balance is 20)\n5. G_ALPHA sends 150 to G_GAMMA (Fee: 2) -> Total 152. (Alpha balance is 100)",
-          question: "Evaluate each transaction. Approve (1) if it is valid, or Reject (0) if it is invalid. Enter the 5-digit binary result (e.g. 10010).",
-          correctAnswer: "10010",
-          debriefText: "Correct! By filtering out invalid transactions, nodes preserve ledger accuracy and prevent double spending attempts before they can compromise blockchain history.",
-          inputs: [
-            { label: "Approvals Code (1=Approve, 0=Reject)", placeholder: "e.g. 10010", key: "code" }
-          ]
-        }
-      },
-      {
-        id: "task2_5",
-        title: "Task 2.5 â€” Chapter Challenge: Transfer Oxygen Supplies",
-        concept: "Ledger transaction auditing",
-        theoryText: "Three space stations are suffering oxygen supply failures. You must validate the transaction ledger queue to identify any invalid transfers and calculate their final balances before the fuel tank systems can be calibrated.",
-        practical: {
-          type: "server-audit",
-          title: "Auditing Station Ledger Allocations",
-          setupText: "Initial Balances:\n- Station_A: 50 units\n- Station_B: 30 units\n- Station_C: 20 units\n\nTransaction Log Queue:\n1. Station_A -> 20 units -> Station_B\n2. Station_B -> 40 units -> Station_C\n3. Station_C -> 50 units -> Station_A\n4. Station_A -> 45 units -> Station_B\n5. Station_B -> 60 units -> Station_C",
-          question: "Input the invalid transaction index (1-5) and the final balances of Station A, B, and C in the fields below.",
-          correctAnswer: "5:35:55:10",
-          debriefText: "Excellent work! The Fuel Tank is successfully installed and filled. In the next module, you will learn how these individual transactions are grouped and structured into blocks.",
-          inputs: [
-            { label: "Invalid Transaction Number", placeholder: "e.g. 5", key: "invalid_tx" },
-            { label: "Station_A Final Balance", placeholder: "e.g. 35", key: "bal_a" },
-            { label: "Station_B Final Balance", placeholder: "e.g. 55", key: "bal_b" },
-            { label: "Station_C Final Balance", placeholder: "e.g. 10", key: "bal_c" }
-          ]
-        }
       }
     ]
   },
@@ -181,6 +147,7 @@ export const MERCURY_CURRICULUM: ModuleDef[] = [
     angle: 0,
     rocketComponent: "ðŸ”¥ Combustion Chamber",
     description: "Learn block header metadata structures, audit genesis configurations, calculate TPS throughput, and reconstruct chronological blockchains.",
+    moduleTheory: "A block is a sealed container that bundles verified transactions together. Each block has a header (height, timestamp, previous-block reference, nonce) and a body (the actual transactions). The very first block — the Genesis block — has no parent and seeds the network's initial state. Block size and block time together set the chain's maximum throughput (TPS). In this module you will dissect a real block, audit a genesis file, calculate throughput, and reorder a scrambled chain by following header pointers back to the start.",
     tasks: [
       {
         id: "task3_1",
