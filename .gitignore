@@ -30,3 +30,17 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Rust / Soroban contract build artifacts (contracts/achievement)
+target/
+**/*.rs.bk
+# NOTE: Cargo.lock is intentionally NOT ignored. This is a deployable binary
+# crate, and the pinned ed25519-dalek 2.1.1 (which fixes a rand_core version
+# diamond in soroban-env-host's testutils) lives only in the lockfile. Ignoring
+# it would let a fresh checkout re-resolve to the broken ed25519-dalek 3.0.0.
+
+# Stellar frontend env — real values live here, never committed.
+# (.env.local is also covered by *.local above; listed explicitly for clarity.)
+.env.local
+.env.testnet
+".env.local" 

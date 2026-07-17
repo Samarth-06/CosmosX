@@ -357,6 +357,11 @@ When all 8 modules pass the verification screen → Final Timed Challenge unlock
 
 ---
 
+## Stellar Testnet Integration
+- Network: Testnet
+- Contract ID: CAOVKUPD2VVWH7DFIRV57WBG6SRXXHIMUDCSWDNAL3SGCPE2GZEWVK3W
+- Verify: https://stellar.expert/explorer/testnet/contract/CAOVKUPD2VVWH7DFIRV57WBG6SRXXHIMUDCSWDNAL3SGCPE2GZEWVK3W
+
 ## 🔐 Auth Strategy (Phase 2)
 
 > **Decision**: Build Mercury core experience as Guest Mode (localStorage) first. Add Supabase Auth once the core UX is polished. Guest progress will migrate to the authenticated account on first login.

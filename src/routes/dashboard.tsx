@@ -16,6 +16,7 @@ import {
 } from "@/lib/user-store";
 import SkillTree from "@/components/SkillTree";
 import LiveActivityFeed from "@/components/LiveActivityFeed";
+import { ProofScreen } from "@/features/achievements/ProofScreen";
 
 export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
@@ -243,6 +244,12 @@ function Dashboard() {
 
           {/* Right column */}
           <div className="space-y-6 lg:col-span-4">
+
+            {/* On-Chain Proof — persistent Stellar Testnet achievement proof */}
+            <motion.div initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.18 }}>
+              <SectionLabel>Blockchain Proof</SectionLabel>
+              <ProofScreen />
+            </motion.div>
 
             {/* Next Mission */}
             <motion.div initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>

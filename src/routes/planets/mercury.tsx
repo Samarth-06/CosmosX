@@ -37,6 +37,8 @@ import {
   getVerifiedModules,
 } from "@/lib/module1-store";
 import ModuleVerificationScreen from "@/components/module/ModuleVerificationScreen";
+import { WalletConnectButton } from "@/features/achievements/WalletConnectButton";
+import { MintButton } from "@/features/achievements/MintButton";
 
 export const Route = createFileRoute("/planets/mercury")({
   component: MercuryModule,
@@ -736,6 +738,19 @@ function MercuryWorkspace({
                       </div>
                     ))}
                   </div>
+
+                  {/* On-chain achievement claim — connect a Stellar wallet and mint
+                      proof of Mercury completion to the Testnet contract. */}
+                  <div className="w-full max-w-sm rounded-2xl border border-cyan-400/25 bg-cyan-400/5 px-5 py-4 text-left">
+                    <p className="font-mono text-[10px] uppercase tracking-wider text-cyan-300/80 mb-3">
+                      Claim your on-chain proof
+                    </p>
+                    <WalletConnectButton />
+                    <div className="mt-3">
+                      <MintButton />
+                    </div>
+                  </div>
+
                   <div className="flex gap-3">
                     <button onClick={handleLaunchRocket}
                       className="px-7 py-3 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-sm rounded-xl transition-all shadow-[0_0_30px_rgba(251,191,36,0.4)] hover:scale-[1.02]">
@@ -762,6 +777,7 @@ function MercuryWorkspace({
 
 export default function MercuryModule() {
   const router = useRouter();
+
   const [view, setView] = useState<"landing" | "workspace">("landing");
   const [task, setTask] = useState<Module1Task>("story");
   const [isLaunching, setIsLaunching] = useState(false);
@@ -771,6 +787,19 @@ export default function MercuryModule() {
 
   // Load saved progress on mount
   useEffect(() => {
+    // DEV-ONLY shortcut: visiting the route with `?dev=complete` jumps straight
+    // to the completion screen (where the on-chain claim UI lives) instead of
+    // playing all 8 modules. Opt-in per visit, read client-side so it never
+    // affects SSR or the default experience, and gated behind Vite's
+    // import.meta.env.DEV so it can never trigger in a production build.
+    if (import.meta.env.DEV && typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("dev") === "complete") {
+        setTask("completed");
+        setView("workspace");
+        return;
+      }
+    }
     try {
       const saved = getMercuryCurrentTask();
       const resolved = saved || "story";
