@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, Suspense } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { Canvas } from "@react-three/fiber";
 
 import Nav from "@/components/Nav";
@@ -15,6 +15,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const router = useRouter();
   const scrollProgress = useRef(0);
   const [hovered, setHovered] = useState<string | null>(null);
   const [activeIdx, setActiveIdx] = useState(-1);
@@ -73,6 +74,10 @@ function Index() {
               setHoveredPlanet={setHovered}
               activePlanetIdx={activeIdx}
               onPlanetClick={(id) => {
+                if (id === "mercury") {
+                  router.navigate({ to: "/planets/mercury" });
+                  return;
+                }
                 const idx = PLANETS.findIndex((p) => p.id === id);
                 if (idx < 0) return;
                 const overview = 0.1;
@@ -94,7 +99,7 @@ function Index() {
       <PlanetTooltip id={hovered ?? (activeIdx >= 0 ? PLANETS[activeIdx]?.id ?? null : null)} />
 
       {/* Scroll-space: first page = hero content, each subsequent page = planet chapter */}
-      <div className="relative z-10">
+      <div className="relative z-10 pointer-events-none">
         <section className="relative h-screen">
           <HeroContent onBeginJourney={handleBeginJourney} onContinueLearning={handleContinueLearning} />
         </section>

@@ -239,6 +239,7 @@ export default function MercuryModule() {
   const [task, setTask] = useState<Module1Task>("story");
   const [activeModule, setActiveModule] = useState<number | null>(null);
   const [selectedModuleId, setSelectedModuleId] = useState<number | null>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [acknowledgedIntros, setAcknowledgedIntros] = useState<Record<number, boolean>>({});
 
   const match = task.match(/^task(\d)_1$/);
@@ -565,6 +566,8 @@ export default function MercuryModule() {
               className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch relative flex-1 min-h-0 overflow-hidden"
             >
               {/* Module selection circular map (Col-span 9) */}
+
+
               <div className="lg:col-span-9 relative h-full flex items-center justify-center min-h-0">
                 
                 {/* 3D ROTATING MERCURY PLANET (Positioned exactly in the center of the left workspace area) */}
@@ -591,68 +594,13 @@ export default function MercuryModule() {
                   />
                 </div>
 
-                {/* Expanding magnetic energy wave ring */}
-                <AnimatePresence>
-                  {wavePhase === "expand" && (
-                    <motion.div
-                      className="absolute top-1/2 left-1/2 rounded-full border-2 border-cyan-400/50 pointer-events-none z-0"
-                      initial={{ width: 0, height: 0, opacity: 0.8, x: "-50%", y: "-50%", boxShadow: "0 0 10px rgba(34, 211, 238, 0.4)" }}
-                      animate={{
-                        width: baseRadius * 2,
-                        height: baseRadius * 2,
-                        opacity: [0.8, 0.9, 0.3, 0],
-                        boxShadow: [
-                          "0 0 10px rgba(34, 211, 238, 0.4)",
-                          "0 0 25px rgba(34, 211, 238, 0.6)",
-                          "0 0 10px rgba(34, 211, 238, 0.2)",
-                          "0 0 0px rgba(34, 211, 238, 0)"
-                        ]
-                      }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 1.2, ease: "easeOut" }}
-                    />
-                  )}
-                </AnimatePresence>
-
-                {/* SVG Perfect Circular Orbit Path Line - centered exactly relative to dynamic baseRadius with flash on impact */}
-                <svg
-                  style={{ width: baseRadius * 2 + 20, height: baseRadius * 2 + 20 }}
-                  className="absolute top-1/2 left-1/2 pointer-events-none z-0 transform -translate-x-1/2 -translate-y-1/2"
-                  viewBox={`0 0 ${baseRadius * 2 + 20} ${baseRadius * 2 + 20}`}
-                >
-                  <circle
-                    cx={baseRadius + 10}
-                    cy={baseRadius + 10}
-                    r={baseRadius}
-                    fill="none"
-                    stroke={wavePhase === "impact" ? "rgba(34, 211, 238, 0.75)" : "rgba(34, 211, 238, 0.15)"}
-                    strokeWidth={wavePhase === "impact" ? 1.8 : 1.2}
-                    strokeDasharray="3 5"
-                    className="transition-all duration-150"
-                  />
-                  <circle
-                    cx={baseRadius + 10}
-                    cy={baseRadius + 10}
-                    r={baseRadius + 5}
-                    fill="none"
-                    stroke={wavePhase === "impact" ? "rgba(34, 211, 238, 0.25)" : "rgba(34, 211, 238, 0.03)"}
-                    strokeWidth="2"
-                    className="transition-all duration-150"
-                  />
-                </svg>
-
                 {/* Left Area Dashboard text headers */}
                 <div className="absolute top-0 left-0 z-10 select-none">
                   <h2 className="font-rushblade text-sm lg:text-base text-white tracking-wider">ORBITAL SECTOR DEPLOYMENT</h2>
                   <p className="text-[9px] lg:text-[10px] font-mono text-muted-foreground uppercase mt-0.5">Explore curriculum paths orbiting Mercury</p>
                 </div>
                 
-                <div className="absolute top-0 right-0 z-30 select-none flex flex-col items-end gap-2">
-                  <div className="flex items-center gap-1.5 text-[9px] text-cyan-400 font-mono bg-cyan-950/40 px-2.5 py-1 rounded-full border border-cyan-500/20 shadow-[0_0_8px_rgba(34,211,238,0.1)]">
-                    <span className="w-1 h-1 rounded-full bg-cyan-400 animate-pulse" />
-                    <span>MAGNETIC WAVE: ACTIVE</span>
-                  </div>
-
+                <div className="absolute top-0 right-0 z-30 select-none flex flex-col items-end">
                   {completedModuleIds.length < 8 ? (
                     <div className="group relative">
                       <button
@@ -705,8 +653,8 @@ export default function MercuryModule() {
                     // Trig: module position on orbit ring
                     const rad = (mod.angle * Math.PI) / 180;
 
-                    // Wave impulse: all modules spring outward at impact phase
-                    const animatedRadius = wavePhase === "impact" ? baseRadius + 26 : baseRadius;
+                    // Wave impulse: modules remain in fixed orbital positions (wave animation runs in background)
+                    const animatedRadius = baseRadius;
 
                     const x = Math.cos(rad) * animatedRadius;
                     const y = Math.sin(rad) * animatedRadius;
@@ -724,6 +672,17 @@ export default function MercuryModule() {
                           className="absolute top-1/2 left-1/2 pointer-events-auto"
                           animate={{ x, y }}
                           transition={{ type: "spring", stiffness: 140, damping: 9 }}
+                          onMouseEnter={() => {
+                            if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+                            if (isUnlocked) {
+                              setSelectedModuleId(mod.id);
+                            }
+                          }}
+                          onMouseLeave={() => {
+                            hoverTimeoutRef.current = setTimeout(() => {
+                              setSelectedModuleId(null);
+                            }, 400); // 400ms delay to allow clicking tasks
+                          }}
                           style={{
                             translateX: "-50%",
                             translateY: "-50%",
@@ -741,10 +700,6 @@ export default function MercuryModule() {
                             {/* Glass bubble module button */}
                             <div className="relative group">
                               <button
-                                onClick={() => {
-                                  if (!isUnlocked) return;
-                                  setSelectedModuleId(isSelected ? null : mod.id);
-                                }}
                                 style={{
                                   borderColor: isUnlocked ? `${mod.color}60` : `${mod.color}30`,
                                   color: isUnlocked ? mod.color : `${mod.color}80`,
