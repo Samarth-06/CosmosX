@@ -235,9 +235,10 @@ export default function Task1_4_ComparisonEngine({ onComplete }: Props) {
                   <p className="text-[10px] text-slate-400 font-mono">Both systems process the initial 3 transactions normally.</p>
                   <button
                     onClick={() => setStep(2)}
-                    className="w-full bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-400 font-bold py-1.5 rounded-full text-[10px] font-mono transition"
+                    className="w-full inline-flex items-center justify-center gap-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-400 font-bold py-1.5 rounded-full text-[10px] font-mono transition cursor-pointer"
                   >
-                    Simulate Database Tamper Attack ➔
+                    <span>Simulate Database Tamper Attack</span>
+                    <ArrowRight className="w-3 h-3" />
                   </button>
                 </div>
               )}
@@ -246,9 +247,10 @@ export default function Task1_4_ComparisonEngine({ onComplete }: Props) {
                   <p className="text-[10px] text-slate-400 font-mono">Attacker targets TX-2 on both databases simultaneously (changes amount from 50 to 500).</p>
                   <button
                     onClick={() => { setAttackStarted(true); setStep(3); }}
-                    className="w-full bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-400 font-bold py-1.5 rounded-full text-[10px] font-mono transition flex items-center justify-center gap-1"
+                    className="w-full bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-400 font-bold py-1.5 rounded-full text-[10px] font-mono transition flex items-center justify-center gap-1.5 cursor-pointer"
                   >
-                    <AlertTriangle className="w-3.5 h-3.5 animate-pulse" /> Execute Attack
+                    <AlertTriangle className="w-3.5 h-3.5 animate-pulse" />
+                    <span>Execute Attack</span>
                   </button>
                 </div>
               )}
@@ -257,9 +259,10 @@ export default function Task1_4_ComparisonEngine({ onComplete }: Props) {
                   <p className="text-[10px] text-slate-400 font-mono">Simulate a hardware server crash on Central server and Node 2 simultaneously.</p>
                   <button
                     onClick={() => { setOfflineStarted(true); setStep("quiz"); }}
-                    className="w-full bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-400 font-bold py-1.5 rounded-full text-[10px] font-mono transition"
+                    className="w-full inline-flex items-center justify-center gap-1.5 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-400 font-bold py-1.5 rounded-full text-[10px] font-mono transition cursor-pointer"
                   >
-                    Trigger Hardware Offline Failure ➔
+                    <span>Trigger Hardware Offline Failure</span>
+                    <ArrowRight className="w-3 h-3" />
                   </button>
                 </div>
               )}

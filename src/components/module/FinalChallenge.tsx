@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, ShieldAlert, Timer } from "lucide-react";
+import { CheckCircle2, ShieldAlert, Timer, ArrowRight } from "lucide-react";
 
 interface FinalChallengeProps {
   onComplete: () => void;
@@ -214,9 +214,10 @@ export default function FinalChallenge({ onComplete }: FinalChallengeProps) {
 
                 <button
                   onClick={onComplete}
-                  className="bg-linear-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-bold px-6 py-3 rounded-full text-xs shadow-lg hover:shadow-emerald-500/20 transition-all uppercase tracking-wider font-mono"
+                  className="inline-flex items-center justify-center gap-1.5 bg-linear-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-bold px-6 py-3 rounded-full text-xs shadow-lg hover:shadow-emerald-500/20 transition-all uppercase tracking-wider font-mono cursor-pointer"
                 >
-                  Claim Launch Platform Part ➔
+                  <span>Claim Launch Platform Part</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </>
             )}

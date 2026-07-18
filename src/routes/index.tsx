@@ -76,14 +76,12 @@ function Index() {
               onPlanetClick={(id) => {
                 if (id === "mercury") {
                   router.navigate({ to: "/planets/mercury" });
-                  return;
+                } else {
+                  const planetExists = PLANETS.some((p) => p.id === id);
+                  if (planetExists) {
+                    router.navigate({ to: "/planets/$planet", params: { planet: id } });
+                  }
                 }
-                const idx = PLANETS.findIndex((p) => p.id === id);
-                if (idx < 0) return;
-                const overview = 0.1;
-                const target = overview + ((idx + 0.5) / PLANETS.length) * (1 - overview);
-                const max = document.documentElement.scrollHeight - window.innerHeight;
-                window.scrollTo({ top: target * max, behavior: "smooth" });
               }}
             />
           </Suspense>

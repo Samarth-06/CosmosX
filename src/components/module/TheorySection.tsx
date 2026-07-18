@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import SpaceOrganism from "./SpaceOrganism";
-import { Database, ShieldAlert, AlertTriangle, Copy, Cpu, Layers, CheckCircle2 } from "lucide-react";
+import { Database, ShieldAlert, AlertTriangle, Copy, Cpu, Layers, CheckCircle2, ArrowRight } from "lucide-react";
 
 interface TheorySectionProps {
   onComplete: () => void;
@@ -200,9 +200,12 @@ export default function TheorySection({ onComplete }: TheorySectionProps) {
             <div className="flex justify-end pt-2">
               <button
                 onClick={handleNext}
-                className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-lg shadow-lg hover:shadow-cyan-500/20 transition-all uppercase tracking-wider text-[10px] font-mono"
+                className="inline-flex items-center justify-center gap-1.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-lg shadow-lg hover:shadow-cyan-500/20 transition-all uppercase tracking-wider text-[10px] font-mono cursor-pointer"
               >
-                {currentSlideIdx === slides.length - 1 ? "I Understand, Unlock Challenge ➔" : "Next Concept ➔"}
+                <span>
+                  {currentSlideIdx === slides.length - 1 ? "I Understand, Unlock Challenge" : "Next Concept"}
+                </span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
           )}

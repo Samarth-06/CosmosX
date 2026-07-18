@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import * as THREE from "three";
 import { Clock, Shield, Coins, Sparkles, Volume2, VolumeX, Rocket, ShieldCheck, AlertTriangle } from "lucide-react";
 
@@ -103,50 +103,50 @@ const RESCUE_QUESTIONS: Question[] = [
   {
     id: 8,
     module: 4,
-    question: "What happens to a SHA-256 hash if you modify a single byte of transaction data?",
+    question: "Which hashing algorithm is most widely used to secure bitcoin block headers?",
     choices: [
-      "Only a single character of the hash shifts",
-      "The hash changes completely (avalanche effect)",
-      "The hash output is truncated by half",
-      "The hash remains identical but turns red"
+      "SHA-256",
+      "Scrypt",
+      "Ethash",
+      "MD5"
     ],
-    answer: "The hash changes completely (avalanche effect)"
+    answer: "SHA-256"
   },
   {
     id: 9,
     module: 5,
-    question: "If block 3's transaction data is altered, what happens to block 4?",
+    question: "In block linking, what happens if a malicious user alters a transaction in Block 2?",
     choices: [
-      "Block 4 is deleted from all client machines",
-      "Block 4's previous hash pointer becomes invalid",
-      "Block 4 updates its own hash to match the changes",
-      "Nothing, block 4 remains completely unaffected"
+      "All subsequent block hashes become invalid due to broken hash linkages",
+      "The network automatically rolls back the entire internet router stack",
+      "The block's size increases to consume infinite disk storage",
+      "The malicious user receives double the mining reward"
     ],
-    answer: "Block 4's previous hash pointer becomes invalid"
+    answer: "All subsequent block hashes become invalid due to broken hash linkages"
   },
   {
     id: 10,
     module: 5,
-    question: "Why is it difficult to alter historic data on a live blockchain network?",
+    question: "What is a Merkle Root?",
     choices: [
-      "Modifying any block requires recalculating all subsequent block hashes",
-      "Historic blocks are automatically archived and locked offline",
-      "The public key signatures of older transactions expire",
-      "Only genesis blocks can be updated by the master node"
+      "The single cryptographic hash that summarizes all transactions inside a block",
+      "The genesis block height number",
+      "The private key used to sign block headers",
+      "The validator's node IP coordinate"
     ],
-    answer: "Modifying any block requires recalculating all subsequent block hashes"
+    answer: "The single cryptographic hash that summarizes all transactions inside a block"
   },
   {
     id: 11,
     module: 6,
-    question: "How do decentralized nodes synchronize database states without a central server?",
+    question: "Which network topology is least vulnerable to a single point of failure?",
     choices: [
-      "They query peer nodes using gossip protocols",
-      "They rely on manual user file updates",
-      "They upload state logs to a central backup cluster",
-      "They download blocks from a master validator node"
+      "Distributed / Peer-to-Peer network",
+      "Centralized star network",
+      "Decentralized multicluster hub network",
+      "Standard client-server database"
     ],
-    answer: "They query peer nodes using gossip protocols"
+    answer: "Distributed / Peer-to-Peer network"
   },
   {
     id: 12,
@@ -277,63 +277,159 @@ export default function FinalEscapeRoom({ onComplete }: Props) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [warpCountdown, setWarpCountdown] = useState(4);
   const [preLaunchCount, setPreLaunchCount] = useState(3);
+  const [scanning, setScanning] = useState(false);
+  const [feedback, setFeedback] = useState<"correct" | "incorrect" | "timeout" | null>(null);
 
-  // Audio Synthesizer Logic
-  const playSynth = (type: "laser" | "crash" | "explosion" | "warp") => {
-    if (!audioEnabled) return;
+  // Web Audio Context Synthesizer for Spaceship Ambience and SFX
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const humNodeRef = useRef<OscillatorNode | null>(null);
+
+  useEffect(() => {
+    if (!audioEnabled || (gameState !== "PLAYING" && gameState !== "WARP")) {
+      stopEngineHum();
+      return;
+    }
+    startEngineHum();
+    return () => stopEngineHum();
+  }, [gameState, audioEnabled]);
+
+  const startEngineHum = () => {
     try {
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       const ctx = new AudioContextClass();
+      audioCtxRef.current = ctx;
+
+      // Low cabin hum oscillator
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(55, ctx.currentTime); // low 55Hz pitch
+
+      // High shelf lowpass filter to remove buzz, leaving smooth hum
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(90, ctx.currentTime);
+
+      gain.gain.setValueAtTime(0.015, ctx.currentTime); // subtle cabin background level
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start();
+      humNodeRef.current = osc;
+    } catch (e) {
+      console.warn("AudioContext initialization failed: ", e);
+    }
+  };
+
+  const stopEngineHum = () => {
+    if (humNodeRef.current) {
+      try {
+        humNodeRef.current.stop();
+      } catch (e) {}
+      humNodeRef.current = null;
+    }
+    if (audioCtxRef.current) {
+      try {
+        audioCtxRef.current.close();
+      } catch (e) {}
+      audioCtxRef.current = null;
+    }
+  };
+
+  const playSynth = (type: "laser" | "crash" | "explosion" | "warp" | "tension" | "success" | "chime") => {
+    if (!audioEnabled) return;
+    try {
+      const ctx = audioCtxRef.current || new (window.AudioContext || (window as any).webkitAudioContext)();
       
       if (type === "laser") {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = "sawtooth";
-        osc.frequency.setValueAtTime(900, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.15);
-        gain.gain.setValueAtTime(0.06, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+        osc.frequency.setValueAtTime(800, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.18);
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start();
-        osc.stop(ctx.currentTime + 0.15);
+        osc.stop(ctx.currentTime + 0.18);
       } else if (type === "crash") {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-        osc.type = "sawtooth";
-        osc.frequency.setValueAtTime(140, ctx.currentTime);
-        osc.frequency.linearRampToValueAtTime(30, ctx.currentTime + 0.45);
-        gain.gain.setValueAtTime(0.2, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.45);
-      } else if (type === "explosion") {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
         osc.type = "triangle";
-        osc.frequency.setValueAtTime(120, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(10, ctx.currentTime + 0.35);
-        gain.gain.setValueAtTime(0.12, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+        osc.frequency.setValueAtTime(130, ctx.currentTime);
+        osc.frequency.linearRampToValueAtTime(30, ctx.currentTime + 0.5);
+        gain.gain.setValueAtTime(0.25, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start();
-        osc.stop(ctx.currentTime + 0.35);
+        osc.stop(ctx.currentTime + 0.5);
+      } else if (type === "explosion") {
+        // High quality white noise burst for explosion
+        const bufferSize = ctx.sampleRate * 0.4; // 0.4 seconds
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = Math.random() * 2 - 1;
+        }
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+        
+        const filter = ctx.createBiquadFilter();
+        filter.type = "lowpass";
+        filter.frequency.setValueAtTime(1000, ctx.currentTime);
+        filter.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.4);
+
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.18, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+        noise.start();
       } else if (type === "warp") {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = "sawtooth";
-        osc.frequency.setValueAtTime(60, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 4.0);
-        gain.gain.setValueAtTime(0.01, ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + 2.0);
+        osc.frequency.setValueAtTime(80, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1600, ctx.currentTime + 4.0);
+        gain.gain.setValueAtTime(0.005, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 2.0);
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 4.0);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start();
         osc.stop(ctx.currentTime + 4.0);
+      } else if (type === "tension") {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(120, ctx.currentTime);
+        osc.frequency.linearRampToValueAtTime(350, ctx.currentTime + 0.35);
+        gain.gain.setValueAtTime(0.04, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.35);
+      } else if (type === "success") {
+        // Achievement triple-chime
+        [0, 0.12, 0.24].forEach((delay, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(440 + idx * 110, ctx.currentTime + delay);
+          gain.gain.setValueAtTime(0.08, ctx.currentTime + delay);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.25);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + delay);
+          osc.stop(ctx.currentTime + delay + 0.25);
+        });
       }
     } catch (e) {
       console.warn("Synth failed: ", e);
@@ -346,8 +442,11 @@ export default function FinalEscapeRoom({ onComplete }: Props) {
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
+        if (prev <= 5 && prev > 1) {
+          playToneForTension();
+        }
         if (prev <= 1) {
-          handleAnswerSelect(""); // triggers timeout/failure
+          handleTimeout();
           return 10;
         }
         return prev - 1;
@@ -356,6 +455,10 @@ export default function FinalEscapeRoom({ onComplete }: Props) {
 
     return () => clearInterval(timer);
   }, [gameState, currentIdx, selectedOption]);
+
+  const playToneForTension = () => {
+    playSynth("tension");
+  };
 
   // Countdown loop
   useEffect(() => {
@@ -377,37 +480,61 @@ export default function FinalEscapeRoom({ onComplete }: Props) {
     return () => clearTimeout(timer);
   }, [gameState, preLaunchCount]);
 
+  const handleTimeout = () => {
+    setFeedback("timeout");
+    setSelectedOption("");
+    setShield((s) => Math.max(0, s - 20));
+    playSynth("crash");
+    gameActionsRef.current?.triggerCollision();
+
+    setTimeout(() => {
+      advanceQuestion();
+    }, 2000);
+  };
+
   // Answer selection callback
   const handleAnswerSelect = (option: string) => {
     setSelectedOption(option);
     const correct = RESCUE_QUESTIONS[currentIdx].answer;
 
     if (option === correct) {
+      setFeedback("correct");
       setScore((s) => s + 150 + timeLeft * 10);
       setCorrectCount((c) => c + 1);
       playSynth("laser");
       gameActionsRef.current?.fireLaser();
     } else {
+      setFeedback("incorrect");
       setShield((s) => Math.max(0, s - 20));
       playSynth("crash");
       gameActionsRef.current?.triggerCollision();
     }
 
-    // Auto-advance after 1.5 seconds
+    // Auto-advance after 1.8 seconds (to allow dramatic collision/shooting display)
     setTimeout(() => {
-      if (currentIdx < RESCUE_QUESTIONS.length - 1) {
+      advanceQuestion();
+    }, 1800);
+  };
+
+  const advanceQuestion = () => {
+    setFeedback(null);
+    if (currentIdx < RESCUE_QUESTIONS.length - 1) {
+      setScanning(true);
+      setTimeout(() => {
+        setScanning(false);
         setCurrentIdx((i) => i + 1);
         setTimeLeft(10);
         setSelectedOption(null);
-      } else {
-        evaluateGameOutcome();
-      }
-    }, 1500);
+      }, 550); // scanning telemetry buffer
+    } else {
+      evaluateGameOutcome();
+    }
   };
 
   const evaluateGameOutcome = () => {
     if (shield > 0 && correctCount >= 12) {
       setGameState("SUCCESS");
+      playSynth("success");
     } else {
       setGameState("GAMEOVER");
     }
@@ -452,183 +579,175 @@ export default function FinalEscapeRoom({ onComplete }: Props) {
 
     // Standard Setup
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x04040a, 0.008);
+    scene.fog = new THREE.FogExp2(0x04040a, 0.012);
 
-    // Position camera closer & lower to look UP slightly at the ship, making it clearly visible
-    const camera = new THREE.PerspectiveCamera(60, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
-    camera.position.set(0, 2.2, 10.5);
+    const camera = new THREE.PerspectiveCamera(62, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+    camera.position.set(0, 2.5, 11);
 
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
     renderer.setClearColor(0x04040a, 1);
 
-    // Ambient light - strong white light to fully illuminate the spacecraft details
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.1);
+    // Dynamic lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
     scene.add(ambientLight);
 
-    // Directional light from front-top-right to cast metallic reflections
-    const dirLight = new THREE.DirectionalLight(0x00ffff, 4.0);
-    dirLight.position.set(5, 10, 15);
+    const dirLight = new THREE.DirectionalLight(0x22d3ee, 5.0); // glowing cyber light
+    dirLight.position.set(6, 12, 10);
     scene.add(dirLight);
 
-    // Spotlight pointing ahead
-    const shipSpot = new THREE.SpotLight(0xef4444, 15, 90, Math.PI / 8, 0.5, 1.0);
-    shipSpot.position.set(0, 0, 0);
-    scene.add(shipSpot);
-    scene.add(shipSpot.target);
+    // Muzzle flash light source (intensity will spike to 10 on shooting)
+    const muzzleLight = new THREE.PointLight(0x22d3ee, 0, 15);
+    scene.add(muzzleLight);
 
-    // --- SPACESHIP DESIGN (Premium Silver & Red Stripe) ---
+    // Spaceship design group
     const shipGroup = new THREE.Group();
     scene.add(shipGroup);
 
-    // 1. Silver metallic Fuselage
-    const fuselageGeom = new THREE.CylinderGeometry(0.04, 0.45, 2.8, 10);
+    // Fuselage cylinder
+    const fuselageGeom = new THREE.CylinderGeometry(0.02, 0.42, 2.6, 12);
     fuselageGeom.rotateX(Math.PI / 2);
-    const bodyMat = new THREE.MeshStandardMaterial({
-      color: 0xcbd5e1, // Silver metallic
+    const fuselageMat = new THREE.MeshStandardMaterial({
+      color: 0x94a3b8, // silver metallic
       roughness: 0.1,
-      metalness: 0.95,
+      metalness: 0.98,
     });
-    const fuselage = new THREE.Mesh(fuselageGeom, bodyMat);
+    const fuselage = new THREE.Mesh(fuselageGeom, fuselageMat);
     shipGroup.add(fuselage);
 
-    // 2. Bold Red Racing Stripe
-    const stripeGeom = new THREE.BoxGeometry(0.1, 0.15, 2.2);
-    const stripeMat = new THREE.MeshStandardMaterial({
-      color: 0xef4444,
-      emissive: 0x991b1b,
-      emissiveIntensity: 0.6,
-      roughness: 0.2,
-      metalness: 0.8,
-    });
-    const stripe = new THREE.Mesh(stripeGeom, stripeMat);
-    stripe.position.set(0, 0.32, -0.1);
-    shipGroup.add(stripe);
-
-    // 3. Cockpit Glass
-    const cockpitGeom = new THREE.SphereGeometry(0.24, 10, 10);
-    cockpitGeom.scale(1, 0.65, 1.8);
-    const cockpitMat = new THREE.MeshStandardMaterial({
-      color: 0x06b6d4, // Cyan glass
-      roughness: 0.05,
-      metalness: 0.95,
-      transparent: true,
-      opacity: 0.8,
-    });
-    const cockpit = new THREE.Mesh(cockpitGeom, cockpitMat);
-    cockpit.position.set(0, 0.2, -0.6);
-    shipGroup.add(cockpit);
-
-    // 4. Wings with Red tips
-    const wingGeom = new THREE.BoxGeometry(1.6, 0.06, 0.8);
-    wingGeom.translate(0, -0.05, 0.2);
+    // Wing panels
+    const wingGeom = new THREE.BoxGeometry(2.0, 0.05, 0.9);
+    wingGeom.translate(0, -0.05, 0.3);
     const wingMat = new THREE.MeshStandardMaterial({
-      color: 0x1e293b, // Dark carbon wings
-      roughness: 0.3,
-      metalness: 0.8,
+      color: 0x1e293b,
+      metalness: 0.85,
+      roughness: 0.2
     });
     const wingL = new THREE.Mesh(wingGeom, wingMat);
-    wingL.position.x = -0.95;
-    wingL.rotation.y = 0.12;
-    wingL.rotation.z = -0.05;
+    wingL.position.x = -1.1;
+    wingL.rotation.y = 0.1;
     shipGroup.add(wingL);
 
     const wingR = wingL.clone();
-    wingR.position.x = 0.95;
-    wingR.rotation.y = -0.12;
-    wingR.rotation.z = 0.05;
+    wingR.position.x = 1.1;
+    wingR.rotation.y = -0.1;
     shipGroup.add(wingR);
 
-    // Thruster exhaust pipe
-    const thrusterGeom = new THREE.CylinderGeometry(0.22, 0.22, 0.3, 8);
-    thrusterGeom.rotateX(Math.PI / 2);
-    const thrusterPipe = new THREE.Mesh(thrusterGeom, new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.8, roughness: 0.4 }));
-    thrusterPipe.position.set(0, 0, 1.35);
-    shipGroup.add(thrusterPipe);
-
-    // Thruster exhaust flame
-    const exhaustGeom = new THREE.ConeGeometry(0.16, 1.0, 8);
+    // Engine exhaust exhaust nozzle
+    const exhaustGeom = new THREE.ConeGeometry(0.18, 1.1, 8);
     exhaustGeom.rotateX(-Math.PI / 2);
-    exhaustGeom.translate(0, 0, 1.85);
-    const flameMat = new THREE.MeshStandardMaterial({
+    exhaustGeom.translate(0, 0, 1.8);
+    const exhaustMat = new THREE.MeshStandardMaterial({
       color: 0xef4444,
-      emissive: 0xd97706,
-      emissiveIntensity: 6,
+      emissive: 0xf97316,
+      emissiveIntensity: 5.0,
       transparent: true,
-      opacity: 0.95,
+      opacity: 0.95
     });
-    const exhaust = new THREE.Mesh(exhaustGeom, flameMat);
+    const exhaust = new THREE.Mesh(exhaustGeom, exhaustMat);
     shipGroup.add(exhaust);
 
-    // Headlight Spot target
-    const headlightTarget = new THREE.Object3D();
-    headlightTarget.position.set(0, 0, -40);
-    shipGroup.add(headlightTarget);
-    shipSpot.target = headlightTarget;
-
-    // Position ship initially
     shipGroup.position.set(0, -0.6, 0);
 
-    // Laser and Collision Emitters
+    // Emitters array
     const activeLasers: THREE.Mesh[] = [];
     const particles: any[] = [];
-    
-    // --- REALISTIC FRAGMENTED ASTEROID DESIGN (Volcanic Lava theme) ---
+    const shockwaves: { mesh: THREE.Mesh; scaleSpeed: number; opacitySpeed: number; life: number }[] = [];
+
+    // Realistic volcanic lava rock design
     const asteroidGroup = new THREE.Group();
     scene.add(asteroidGroup);
 
-    // Main rock core (Jagged Dodecahedron)
-    const rockCoreGeom = new THREE.DodecahedronGeometry(1.6, 1);
-    const posAttr = rockCoreGeom.attributes.position;
+    const asteroidGeom = new THREE.DodecahedronGeometry(1.65, 1);
+    const posAttr = asteroidGeom.attributes.position;
     for (let i = 0; i < posAttr.count; i++) {
       const vx = posAttr.getX(i);
       const vy = posAttr.getY(i);
       const vz = posAttr.getZ(i);
-      const distort = 0.82 + Math.random() * 0.36;
-      posAttr.setXYZ(i, vx * distort, vy * distort, vz * distort);
+      const deform = 0.82 + Math.random() * 0.35;
+      posAttr.setXYZ(i, vx * deform, vy * deform, vz * deform);
     }
-    rockCoreGeom.computeVertexNormals();
+    asteroidGeom.computeVertexNormals();
 
-    const rockCoreMat = new THREE.MeshStandardMaterial({
-      color: 0x27272a, // Deep charcoal rock
+    const asteroidMat = new THREE.MeshStandardMaterial({
+      color: 0x27272a,
       roughness: 0.95,
       metalness: 0.05,
       flatShading: true,
-      emissive: 0x3f1616, // volcanic dim red glow in cracks
-      emissiveIntensity: 1.2,
+      emissive: 0x450a0a,
+      emissiveIntensity: 1.5,
     });
-    const rockCore = new THREE.Mesh(rockCoreGeom, rockCoreMat);
-    asteroidGroup.add(rockCore);
+    const asteroid = new THREE.Mesh(asteroidGeom, asteroidMat);
+    asteroidGroup.add(asteroid);
 
-    // Volcanic lava neon lines overlay
-    const lavaEdges = new THREE.EdgesGeometry(rockCoreGeom);
-    const lavaWire = new THREE.LineSegments(lavaEdges, new THREE.LineBasicMaterial({ color: 0xff3700, linewidth: 2 }));
+    // Volcanic lava neon mesh wires
+    const lavaEdges = new THREE.EdgesGeometry(asteroidGeom);
+    const lavaWire = new THREE.LineSegments(lavaEdges, new THREE.LineBasicMaterial({ color: 0xff4500, linewidth: 1.5 }));
     asteroidGroup.add(lavaWire);
 
-    // Add 4 smaller orbit debris rocks to make the obstacle cluster look highly realistic
-    const miniRockGeom = new THREE.IcosahedronGeometry(0.35, 0);
-    const miniRockMat = new THREE.MeshStandardMaterial({ color: 0x3f3f46, roughness: 0.9, flatShading: true });
-    
-    const offsets = [
-      new THREE.Vector3(2.0, -0.5, 0.8),
-      new THREE.Vector3(-1.8, 0.8, -1.2),
-      new THREE.Vector3(0.5, -1.5, -2.0),
-      new THREE.Vector3(-0.6, 1.8, 1.5)
-    ];
+    asteroidGroup.position.set(0, -0.5, -38);
 
-    offsets.forEach((off) => {
-      const miniMesh = new THREE.Mesh(miniRockGeom, miniRockMat);
-      miniMesh.position.copy(off);
-      miniMesh.scale.set(Math.random() * 0.8 + 0.6, Math.random() * 0.8 + 0.6, Math.random() * 0.8 + 0.6);
-      asteroidGroup.add(miniMesh);
-    });
+    // Parallax Starfields
+    const starsGroup = new THREE.Group();
+    scene.add(starsGroup);
 
-    asteroidGroup.position.set(0, -0.5, -35); // place target directly ahead
+    const starCount = 280;
+    const starLines: { line: THREE.Line; speed: number; length: number; ox: number; oy: number; oz: number }[] = [];
+    const lineMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 });
 
-    // Particle Burst Creator
-    const createExplosion = (pos: THREE.Vector3, colorHex: number, count = 20) => {
-      const geom = new THREE.SphereGeometry(0.12, 4, 4);
+    for (let i = 0; i < starCount; i++) {
+      const ox = (Math.random() - 0.5) * 55;
+      const oy = (Math.random() - 0.5) * 40;
+      const oz = Math.random() * -240;
+      
+      const geom = new THREE.BufferGeometry();
+      const points = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 1.4)];
+      geom.setFromPoints(points);
+
+      const line = new THREE.Line(geom, lineMat);
+      line.position.set(ox, oy, oz);
+      starsGroup.add(line);
+
+      starLines.push({
+        line,
+        speed: Math.random() * 0.8 + 1.2,
+        length: 1.4,
+        ox,
+        oy,
+        oz,
+      });
+    }
+
+    // Interactive action listeners mapping
+    let shakeIntensity = 0;
+    let warpActive = gameState === "WARP";
+    let activeFlameIntensity = 1.0;
+    let damageFireDuration = 0;
+
+    const createShockwave = (pos: THREE.Vector3) => {
+      const geom = new THREE.RingGeometry(0.1, 1.8, 16);
+      const mat = new THREE.MeshBasicMaterial({
+        color: 0x22d3ee,
+        transparent: true,
+        opacity: 0.8,
+        side: THREE.DoubleSide
+      });
+      const mesh = new THREE.Mesh(geom, mat);
+      mesh.position.copy(pos);
+      mesh.rotation.x = Math.PI / 2; // flat horizontal expand
+      scene.add(mesh);
+
+      shockwaves.push({
+        mesh,
+        scaleSpeed: 0.22,
+        opacitySpeed: 0.04,
+        life: 25
+      });
+    };
+
+    const createCollisionBurst = (pos: THREE.Vector3, colorHex: number, count = 25) => {
+      const geom = new THREE.SphereGeometry(0.12, 5, 5);
       const mat = new THREE.MeshBasicMaterial({
         color: colorHex,
         transparent: true,
@@ -642,97 +761,65 @@ export default function FinalEscapeRoom({ onComplete }: Props) {
 
         const theta = Math.random() * Math.PI * 2;
         const phi = Math.acos(Math.random() * 2 - 1);
-        const speed = Math.random() * 0.4 + 0.15;
+        const speed = Math.random() * 0.35 + 0.15;
 
         particles.push({
           mesh,
           vx: Math.sin(phi) * Math.cos(theta) * speed,
           vy: Math.sin(phi) * Math.sin(theta) * speed,
           vz: Math.cos(phi) * speed,
-          life: 35,
-          maxLife: 35,
+          life: 30,
+          maxLife: 30,
         });
       }
     };
 
-    // Stardust Field (Lines representing high speed)
-    const starCount = 200;
-    const starsGroup = new THREE.Group();
-    scene.add(starsGroup);
-
-    const starLines: { line: THREE.Line; speed: number; length: number; ox: number; oy: number; oz: number }[] = [];
-    const lineMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 });
-
-    for (let i = 0; i < starCount; i++) {
-      const ox = (Math.random() - 0.5) * 50;
-      const oy = (Math.random() - 0.5) * 35;
-      const oz = Math.random() * -250;
-      
-      const geom = new THREE.BufferGeometry();
-      const points = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 1.2)];
-      geom.setFromPoints(points);
-
-      const line = new THREE.Line(geom, lineMat);
-      line.position.set(ox, oy, oz);
-      starsGroup.add(line);
-
-      starLines.push({
-        line,
-        speed: Math.random() * 0.7 + 1.4,
-        length: 1.2,
-        ox,
-        oy,
-        oz,
-      });
-    }
-
-    // Action Ref hooks mapping
-    let shakeIntensity = 0;
-    let warpActive = gameState === "WARP";
-    let damageFireDuration = 0;
-
     gameActionsRef.current = {
       fireLaser: () => {
-        // Roll pilot dodge rotation
-        shipGroup.rotation.z = Math.PI * 2;
-        
-        // Spawn wings lasers
-        const laserMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
-        const laserL = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.5, 6), laserMat);
-        laserL.rotation.x = Math.PI / 2;
-        laserL.position.set(-0.9, 0, -0.6);
-        shipGroup.add(laserL);
+        // Gun wingtip lasers
+        const laserMat = new THREE.MeshBasicMaterial({ color: 0x22d3ee });
+        const laserGeom = new THREE.CylinderGeometry(0.04, 0.04, 2.5, 6);
+        laserGeom.rotateX(Math.PI / 2);
+
+        const laserL = new THREE.Mesh(laserGeom, laserMat);
+        laserL.position.set(-1.1, -0.6, 0.5);
+        scene.add(laserL);
 
         const laserR = laserL.clone();
-        laserR.position.x = 0.9;
-        shipGroup.add(laserR);
+        laserR.position.x = 1.1;
+        scene.add(laserR);
 
         activeLasers.push(laserL, laserR);
 
-        // Explode asteroid cluster
+        // Recoil effect
+        shipGroup.position.z += 0.45;
+        muzzleLight.intensity = 8.0;
+
+        // Explode target
         setTimeout(() => {
           playSynth("explosion");
-          createExplosion(asteroidGroup.position, 0x00ffff, 25);
-          // scale down asteroid to mock destruction
+          createExplosion(asteroidGroup.position);
+          createShockwave(asteroidGroup.position);
+
+          // scale down to represent hit breakdown
           asteroidGroup.scale.set(0.01, 0.01, 0.01);
           
           setTimeout(() => {
             // Respawn asteroid in distance
-            asteroidGroup.position.set((Math.random() - 0.5) * 8, (Math.random() - 0.5) * 4 - 0.5, -35);
+            asteroidGroup.position.set((Math.random() - 0.5) * 8, (Math.random() - 0.5) * 4 - 0.5, -38);
             asteroidGroup.scale.set(1, 1, 1);
-          }, 850);
-        }, 300);
+          }, 800);
+        }, 320);
       },
       triggerCollision: () => {
         // Bring asteroid close for collision visual
         asteroidGroup.position.set(0, -0.5, -4);
         setTimeout(() => {
           shakeIntensity = 0.55;
-          createExplosion(shipGroup.position, 0xff3700, 25);
-          shipGroup.rotation.x = -0.3; // pitch back
-          asteroidGroup.position.set(0, -0.5, -35);
-          // Set damaged status -> catch fire for 3.5 seconds
-          damageFireDuration = 3.5;
+          createCollisionBurst(shipGroup.position, 0xff4500, 30);
+          shipGroup.rotation.x = -0.35; // recoil back pitch
+          asteroidGroup.position.set(0, -0.5, -38);
+          damageFireDuration = 3.5; // catch fire
         }, 120);
       },
       setWarpSpeed: (active: boolean) => {
@@ -740,7 +827,10 @@ export default function FinalEscapeRoom({ onComplete }: Props) {
       },
     };
 
-    // Frame Resize binding
+    const createExplosion = (pos: THREE.Vector3) => {
+      createCollisionBurst(pos, 0x22d3ee, 30);
+    };
+
     const handleResize = () => {
       if (!canvas) return;
       const w = canvas.clientWidth;
@@ -751,7 +841,7 @@ export default function FinalEscapeRoom({ onComplete }: Props) {
     };
     window.addEventListener("resize", handleResize);
 
-    // Animation Loop
+    // Animation Render Loop
     let animId = 0;
     const clock = new THREE.Clock();
 
@@ -759,22 +849,31 @@ export default function FinalEscapeRoom({ onComplete }: Props) {
       const elapsed = clock.getElapsedTime();
       const delta = clock.getDelta();
 
-      // Spaceship floating motion idle
+      // Spaceship floating motion with velocity-aware tilt
       if (!warpActive) {
-        shipGroup.position.y = -0.6 + Math.sin(elapsed * 2.2) * 0.12;
-        shipGroup.position.x = Math.cos(elapsed * 1.6) * 0.08;
-        shipGroup.rotation.z += (0 - shipGroup.rotation.z) * 0.1;
-        shipGroup.rotation.x += (0 - shipGroup.rotation.x) * 0.1;
-        exhaust.scale.set(1, 1 + Math.sin(elapsed * 18) * 0.15, 1);
-        asteroidGroup.rotation.y += 0.012;
-        asteroidGroup.rotation.z += 0.004;
+        const lastX = shipGroup.position.x;
+        shipGroup.position.y = -0.6 + Math.sin(elapsed * 2.4) * 0.14;
+        shipGroup.position.x = Math.sin(elapsed * 1.1) * 1.1; // slow side-to-side sweeping
         
-        // CATCHING FIRE (Trailing fiery smoke particles if damaged)
+        const dx = shipGroup.position.x - lastX;
+        shipGroup.rotation.z = -dx * 3.5; // banking/rolling rotation
+        shipGroup.rotation.y = -dx * 1.5; // yaw rotation
+
+        // Recoil slide recovery
+        shipGroup.position.z += (0 - shipGroup.position.z) * 0.15;
+        
+        // Muzzle flash fade
+        muzzleLight.intensity += (0 - muzzleLight.intensity) * 0.12;
+
+        exhaust.scale.set(1, 1 + Math.sin(elapsed * 20) * 0.18, 1);
+        asteroidGroup.rotation.y += 0.015;
+        asteroidGroup.rotation.z += 0.005;
+
+        // Damage smoke loop
         if (damageFireDuration > 0) {
-          damageFireDuration -= 0.016; // approx time step
-          if (Math.random() < 0.35) {
-            // Spawn flame bubble particle
-            const fireGeom = new THREE.SphereGeometry(Math.random() * 0.16 + 0.06, 5, 5);
+          damageFireDuration -= 0.016;
+          if (Math.random() < 0.42) {
+            const fireGeom = new THREE.SphereGeometry(Math.random() * 0.15 + 0.06, 5, 5);
             const fireMat = new THREE.MeshBasicMaterial({
               color: Math.random() > 0.4 ? 0xff4500 : 0xffaa00,
               transparent: true,
@@ -782,56 +881,56 @@ export default function FinalEscapeRoom({ onComplete }: Props) {
             });
             const fireMesh = new THREE.Mesh(fireGeom, fireMat);
             fireMesh.position.copy(shipGroup.position);
-            fireMesh.position.x += (Math.random() - 0.5) * 0.4;
-            fireMesh.position.y += (Math.random() - 0.5) * 0.2 + 0.2;
-            fireMesh.position.z += 0.2 + Math.random() * 0.6;
+            fireMesh.position.x += (Math.random() - 0.5) * 0.35;
+            fireMesh.position.y += (Math.random() - 0.5) * 0.15 + 0.25;
+            fireMesh.position.z += 0.2 + Math.random() * 0.5;
             scene.add(fireMesh);
 
             particles.push({
               mesh: fireMesh,
-              vx: (Math.random() - 0.5) * 0.06,
-              vy: Math.random() * 0.08 + 0.06, // float up
-              vz: Math.random() * 0.12 + 0.18, // float back
+              vx: (Math.random() - 0.5) * 0.05,
+              vy: Math.random() * 0.08 + 0.05,
+              vz: Math.random() * 0.12 + 0.18,
               life: 25,
               maxLife: 25
             });
           }
         }
       } else {
-        // Warp flight
+        // Warp travel
         shipGroup.position.set(0, -0.6, 0);
         shipGroup.rotation.set(0, 0, 0);
         shipGroup.scale.addScalar(-0.0035);
-        exhaust.scale.set(1.4, 4.5, 1.4);
-        flameMat.color.setHex(0x00ffff); // Cyan drive plume
-        flameMat.emissive.setHex(0x06b6d4);
+        exhaust.scale.set(1.4, 4.8, 1.4);
+        exhaustMat.color.setHex(0x22d3ee);
+        exhaustMat.emissive.setHex(0x06b6d4);
       }
 
-      // Update stardust line segments Z values
+      // Update stardust line segments Z values (multi-layered parallax)
       starLines.forEach((s) => {
-        const starSpeed = warpActive ? 32 : s.speed;
-        const starLen = warpActive ? 42 : s.length;
+        const starSpeed = warpActive ? 35 : s.speed;
+        const starLen = warpActive ? 45 : s.length;
         s.line.position.z += starSpeed;
         s.line.scale.z = starLen;
 
         if (s.line.position.z > 25) {
           s.line.position.z = -250;
-          s.line.position.x = (Math.random() - 0.5) * 50;
-          s.line.position.y = (Math.random() - 0.5) * 35;
+          s.line.position.x = (Math.random() - 0.5) * 55;
+          s.line.position.y = (Math.random() - 0.5) * 40;
         }
       });
 
       // Fly lasers forward
       for (let i = activeLasers.length - 1; i >= 0; i--) {
         const l = activeLasers[i];
-        l.position.z -= 3.0;
+        l.position.z -= 2.6;
         if (l.position.z < -65) {
-          shipGroup.remove(l);
+          scene.remove(l);
           activeLasers.splice(i, 1);
         }
       }
 
-      // Move explosion shards
+      // Move particles
       for (let p = particles.length - 1; p >= 0; p--) {
         const part = particles[p];
         part.mesh.position.x += part.vx;
@@ -850,16 +949,31 @@ export default function FinalEscapeRoom({ onComplete }: Props) {
         }
       }
 
-      // Screen/Camera Shaking damping
+      // Expand shockwaves
+      for (let s = shockwaves.length - 1; s >= 0; s--) {
+        const sw = shockwaves[s];
+        sw.mesh.scale.addScalar(sw.scaleSpeed);
+        (sw.mesh.material as THREE.MeshBasicMaterial).opacity -= sw.opacitySpeed;
+        sw.life--;
+
+        if (sw.life <= 0) {
+          scene.remove(sw.mesh);
+          sw.mesh.geometry.dispose();
+          (sw.mesh.material as THREE.MeshBasicMaterial).dispose();
+          shockwaves.splice(s, 1);
+        }
+      }
+
+      // Camera shake
       if (shakeIntensity > 0) {
         camera.position.x = (Math.random() - 0.5) * shakeIntensity;
-        camera.position.y = 2.2 + (Math.random() - 0.5) * shakeIntensity;
+        camera.position.y = 2.5 + (Math.random() - 0.5) * shakeIntensity;
         shakeIntensity *= 0.88;
         if (shakeIntensity < 0.02) shakeIntensity = 0;
       } else {
-        camera.position.set(0, 2.2, 10.5);
+        camera.position.set(0, 2.5, 11);
       }
-      camera.lookAt(0, 0, -20);
+      camera.lookAt(0, 0, -22);
 
       renderer.render(scene, camera);
       animId = requestAnimationFrame(renderLoop);
@@ -867,11 +981,9 @@ export default function FinalEscapeRoom({ onComplete }: Props) {
 
     renderLoop();
 
-    // Clean up Three.js contexts
     return () => {
       window.removeEventListener("resize", handleResize);
       cancelAnimationFrame(animId);
-
       scene.traverse((obj) => {
         if ((obj as any).geometry) (obj as any).geometry.dispose();
         if ((obj as any).material) {
@@ -889,7 +1001,7 @@ export default function FinalEscapeRoom({ onComplete }: Props) {
   const currentQuestion = RESCUE_QUESTIONS[currentIdx];
 
   return (
-    <div className="bg-slate-950/70 border border-red-500/20 rounded-2xl p-4 lg:p-5 backdrop-blur-md shadow-2xl flex flex-col justify-between h-full min-h-0 flex-1 overflow-hidden select-none relative z-10">
+    <div className="bg-slate-950/70 border border-white/10 rounded-2xl p-4 lg:p-5 backdrop-blur-md shadow-2xl flex flex-col justify-between h-full min-h-0 flex-1 overflow-hidden select-none relative z-10">
       
       {/* HUD HEADER PANEL */}
       <div className="w-full flex items-center justify-between mb-3.5 bg-slate-950/60 border border-white/5 px-4 py-2.5 rounded-xl backdrop-blur-md shrink-0 font-mono text-[9px] text-slate-400">
@@ -925,7 +1037,7 @@ export default function FinalEscapeRoom({ onComplete }: Props) {
 
         <button
           onClick={() => setAudioEnabled(!audioEnabled)}
-          className={`p-1.5 rounded-lg border transition-all ${
+          className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
             audioEnabled
               ? "bg-cyan-500/10 border-cyan-500/30 text-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.15)]"
               : "bg-slate-900/60 border-white/5 text-slate-500"
@@ -939,12 +1051,28 @@ export default function FinalEscapeRoom({ onComplete }: Props) {
       {/* TWO-COLUMN LAYOUT (FLUID HEIGHT, FIT ON SCREEN) */}
       <div className="flex-1 min-h-0 flex flex-row gap-4">
         
-        {/* Left Column: Square Canvas Viewport */}
-        <div className="w-[45%] aspect-square h-full max-h-[420px] bg-[#020207] border border-white/10 rounded-2xl overflow-hidden relative flex items-center justify-center shrink-0">
+        {/* Left Column: Game Viewport (Expanded from 45% to 68%) */}
+        <div className="w-[68%] h-full bg-[#020207] border border-white/10 rounded-2xl overflow-hidden relative flex items-center justify-center shrink-0">
           
           {/* WebGL Canvas */}
           {(gameState === "PLAYING" || gameState === "WARP") && (
             <canvas ref={canvasRef} className="w-full h-full block" />
+          )}
+
+          {/* Correct / Incorrect HUD floating notices */}
+          {gameState === "PLAYING" && selectedOption !== null && (
+            <div className="absolute top-4 left-4 z-20 font-mono text-[10px] bg-slate-950/80 px-3 py-1.5 rounded border pointer-events-none uppercase tracking-wider">
+              {feedback === "correct" && (
+                <span className="text-emerald-400 font-extrabold flex items-center gap-1">
+                  ✓ DIRECT IMPACT (+150 XP)
+                </span>
+              )}
+              {feedback === "incorrect" && (
+                <span className="text-red-500 font-extrabold flex items-center gap-1">
+                  🚨 COLLISION SHIELD COMPROMISED (-20% HULL)
+                </span>
+              )}
+            </div>
           )}
 
           {/* 1. START OVERLAY */}
@@ -1001,15 +1129,15 @@ export default function FinalEscapeRoom({ onComplete }: Props) {
           {/* 3. SUCCESS / COMPLETE OVERLAY */}
           {gameState === "SUCCESS" && (
             <div className="absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center p-5 text-center space-y-4">
-              <div className="w-10 h-10 bg-emerald-500/10 border border-emerald-500/30 rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.3)] animate-bounce text-sm">
-                🛸
+              <div className="w-10 h-10 bg-emerald-500/10 border border-emerald-500/30 rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.3)] animate-bounce text-sm text-emerald-400">
+                🚀
               </div>
               <div>
-                <h2 className="text-[11px] font-bold tracking-widest text-emerald-400 uppercase font-rushblade">
-                  ESC PROTOCOL SECURED
+                <h2 className="text-[11.5px] font-bold tracking-widest text-emerald-400 uppercase font-rushblade">
+                  MERCURY MISSION ✓ MASTERED
                 </h2>
                 <p className="text-[8.5px] text-slate-400 mt-1 max-w-xs mx-auto font-mono">
-                  All sectors verify consensus locks. Ready for launch takeoff!
+                  All sectors verify consensus locks. V-2 rocket ready for launch takeoff!
                 </p>
               </div>
               <button
@@ -1045,8 +1173,8 @@ export default function FinalEscapeRoom({ onComplete }: Props) {
           )}
         </div>
 
-        {/* Right Column: Question Content / Stats Panel */}
-        <div className="flex-1 flex flex-col justify-between min-h-0 pl-2">
+        {/* Right Column: Question Content / Stats Panel (32% width) */}
+        <div className="w-[32%] flex flex-col justify-between min-h-0 pl-2">
           
           {/* Display instructions/rules when not actively answering */}
           {gameState !== "PLAYING" ? (
@@ -1070,9 +1198,6 @@ export default function FinalEscapeRoom({ onComplete }: Props) {
                   <div className="flex gap-2"><span>⚡</span><span>At least **12 correct answers** are required to successfully launch.</span></div>
                 </div>
               </div>
-              <p className="text-[9px] font-mono text-slate-500 italic">
-                Secure flight logs can be repeated multiple times. Ensure consensus signatures are sealed.
-              </p>
             </div>
           ) : (
             currentQuestion && (
@@ -1091,9 +1216,28 @@ export default function FinalEscapeRoom({ onComplete }: Props) {
                       </span>
                     </div>
                   </div>
-                  <h3 className="font-sans text-[11px] lg:text-[12px] font-bold text-slate-100 mt-1.5 select-text leading-snug">
-                    {currentQuestion.question}
-                  </h3>
+
+                  {/* Scanning Database Loader Overlay */}
+                  <AnimatePresence mode="wait">
+                    {scanning ? (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="py-6 font-mono text-[9px] text-sky-400 uppercase tracking-widest animate-pulse"
+                      >
+                        ⚡ Scanning knowledge database...
+                      </motion.div>
+                    ) : (
+                      <motion.h3
+                        initial={{ opacity: 0, x: 5 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="font-sans text-[11.5px] lg:text-[12px] font-bold text-slate-100 mt-2 select-text leading-snug"
+                      >
+                        {currentQuestion.question}
+                      </motion.h3>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 {/* MCQ Selection Choices */}
@@ -1104,11 +1248,14 @@ export default function FinalEscapeRoom({ onComplete }: Props) {
                     const hasAnswered = selectedOption !== null;
 
                     let btnStyle = "bg-slate-950/60 hover:bg-slate-950/90 border-white/10 text-slate-300 hover:text-white";
+                    let prefix = "";
                     if (hasAnswered) {
                       if (isCorrect) {
                         btnStyle = "bg-emerald-950/40 border-emerald-500 text-emerald-400 font-bold shadow-[0_0_10px_rgba(16,185,129,0.15)]";
+                        prefix = "✓ KNOWLEDGE VERIFIED: ";
                       } else if (isSelected) {
                         btnStyle = "bg-red-950/40 border-red-500 text-red-400 font-bold shadow-[0_0_10px_rgba(239,68,68,0.15)]";
+                        prefix = "✕ VALIDATION FAILED: ";
                       } else {
                         btnStyle = "bg-slate-950/30 border-white/5 text-slate-500 opacity-60";
                       }
@@ -1121,15 +1268,40 @@ export default function FinalEscapeRoom({ onComplete }: Props) {
                         onClick={() => handleAnswerSelect(choice)}
                         className={`w-full text-left border p-2.5 rounded-xl text-[9.5px] font-sans transition flex items-center justify-between cursor-pointer ${btnStyle}`}
                       >
-                        <span>{choice}</span>
+                        <span>{prefix}{choice}</span>
                       </button>
                     );
                   })}
                 </div>
 
+                {/* Response Timer Progress Bar */}
+                <div className="space-y-1 mt-2 select-none">
+                  <div className="flex justify-between font-mono text-[8px] text-slate-500">
+                    <span>MISSION RESPONSE TIMER</span>
+                    <span className={timeLeft <= 3 ? "text-red-400 animate-pulse font-extrabold" : ""}>
+                      {timeLeft <= 3 ? "⚠ SIGNAL LOSS IMMINENT" : timeLeft <= 6 ? "⚠ RESPONSE WINDOW CLOSING" : "TIME OK"}
+                    </span>
+                  </div>
+                  <div className="h-1 bg-slate-900 border border-white/5 rounded-full overflow-hidden">
+                    <div
+                      style={{ width: `${timeLeft * 10}%` }}
+                      className={`h-full transition-all duration-1000 ${
+                        timeLeft <= 3 ? "bg-red-500 shadow-[0_0_4px_#ef4444]" : timeLeft <= 6 ? "bg-amber-500" : "bg-cyan-400"
+                      }`}
+                    />
+                  </div>
+                </div>
+
+                {/* Timeout Indicator Overlay Overlay */}
+                {feedback === "timeout" && (
+                  <div className="mt-2 p-2 rounded-lg bg-red-950/40 border border-red-500/20 text-red-400 font-mono text-[9px] text-center flex items-center justify-center gap-1.5 uppercase animate-pulse">
+                    💀 too late, cadet! mission response window closed
+                  </div>
+                )}
+
                 <div className="border-t border-white/5 pt-2.5 mt-3 flex justify-between font-mono text-[8px] text-slate-500">
                   <span>SECURE SYSTEM TRANSMISSION ACTIVE</span>
-                  <span>WARNING: DEBRIS DENSITIES INCREASING UPSTREAM</span>
+                  <span>WARNING: DEBRIS DENSITIES INCREASING</span>
                 </div>
               </div>
             )

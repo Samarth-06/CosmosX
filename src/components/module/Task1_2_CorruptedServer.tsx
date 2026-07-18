@@ -99,15 +99,15 @@ function CentralizedTamperSVG({ corrupted, onTamper }: { corrupted: boolean; onT
 
       {/* Database Node */}
       <g transform="translate(160, 80)" className="cursor-pointer" onClick={onTamper}>
-        <circle r={corrupted ? 32 : 28} fill="url(#centSvr)" style={{ transition: "all 0.5s" }} />
+        <circle r={corrupted ? 38 : 34} fill="url(#centSvr)" style={{ transition: "all 0.5s" }} stroke={corrupted ? "#fca5a5" : "#22d3ee"} strokeWidth="1" />
         {corrupted && (
-          <circle r="36" fill="none" stroke="#ef4444" strokeWidth="1.5" opacity="0.6">
-            <animate attributeName="r" values="32;46;32" dur="1.5s" repeatCount="indefinite" />
+          <circle r="44" fill="none" stroke="#ef4444" strokeWidth="1.5" opacity="0.6">
+            <animate attributeName="r" values="38;52;38" dur="1.5s" repeatCount="indefinite" />
             <animate attributeName="opacity" values="0.6;0;0.6" dur="1.5s" repeatCount="indefinite" />
           </circle>
         )}
-        <text y="-2" textAnchor="middle" fill="#fff" fontSize="8" fontFamily="monospace" fontWeight="bold">CENTRAL DB</text>
-        <text y="8" textAnchor="middle" fill={corrupted ? "#fca5a5" : "#67e8f9"} fontSize="7" fontFamily="monospace">
+        <text y="-3" textAnchor="middle" fill="#fff" fontSize="8" fontFamily="monospace" fontWeight="bold" letterSpacing="0.5">CENTRAL DB</text>
+        <text y="7" textAnchor="middle" fill={corrupted ? "#fca5a5" : "#67e8f9"} fontSize="6.5" fontFamily="monospace" fontWeight="bold" letterSpacing="0.2">
           {corrupted ? "BREACHED" : "CLICK TO HACK"}
         </text>
       </g>
@@ -117,7 +117,7 @@ function CentralizedTamperSVG({ corrupted, onTamper }: { corrupted: boolean; onT
         <g key={i}>
           <line x1="160" y1="80" x2={c.x} y2={c.y} stroke={corrupted ? "rgba(239,68,68,0.3)" : "rgba(34,211,238,0.3)"} strokeWidth="1" strokeDasharray={corrupted ? "3 3" : "none"} />
           <circle cx={c.x} cy={c.y} r="14" fill="#0f172a" stroke={corrupted ? "#ef4444" : "#6366f1"} strokeWidth="1.5" />
-          <text x={c.x} y={c.y + 4} textAnchor="middle" fill={corrupted ? "#ef4444" : "#c4b5fd"} fontSize="8" fontFamily="monospace">
+          <text x={c.x} y={c.y + 3} textAnchor="middle" fill={corrupted ? "#ef4444" : "#ffffff"} fontSize="8" fontFamily="monospace" fontWeight="bold">
             {corrupted ? "✕" : c.name}
           </text>
         </g>
@@ -159,7 +159,7 @@ function ConsensusVerifySVG({ compromisedNode, onCompromise }: { compromisedNode
                 </circle>
               </>
             ) : (
-              <text y="3" textAnchor="middle" fill="#a7f3d0" fontSize="8" fontFamily="monospace" fontWeight="bold">{n.label}</text>
+              <text y="3" textAnchor="middle" fill="#ffffff" fontSize="8" fontFamily="monospace" fontWeight="bold">{n.label}</text>
             )}
           </g>
         );
@@ -306,10 +306,62 @@ export default function Task1_2_CorruptedServer({ onComplete }: { onComplete: ()
   };
 
   const isStepUnlocked = (s: Step) => {
-    const idx = STEP_ORDER.indexOf(s);
-    if (idx === 0) return true;
-    return completedSteps.includes(STEP_ORDER[idx - 1]) || STEP_ORDER.indexOf(step) >= idx;
+    return true;
   };
+
+  const currentIdx = STEP_ORDER.indexOf(step);
+
+  useEffect(() => {
+    const notifyState = () => {
+      const urlMapping: Record<Step, string> = {
+        theory: "theory",
+        demo: "tampering-demo",
+        quiz: "knowledge-check",
+        game: "log-audit-challenge",
+        complete: "verification",
+      };
+      
+      window.dispatchEvent(
+        new CustomEvent("cosmos-x-nav-state", {
+          detail: {
+            canGoBack: currentIdx > 0,
+            canGoForward: currentIdx < STEP_ORDER.length - 1 && isStepUnlocked(STEP_ORDER[currentIdx + 1]),
+            currentStep: urlMapping[step],
+          },
+        })
+      );
+    };
+    notifyState();
+
+    const handleBack = () => {
+      if (currentIdx > 0) {
+        setStep(STEP_ORDER[currentIdx - 1]);
+      }
+    };
+    const handleForward = () => {
+      if (currentIdx < STEP_ORDER.length - 1 && isStepUnlocked(STEP_ORDER[currentIdx + 1])) {
+        setStep(STEP_ORDER[currentIdx + 1]);
+      }
+    };
+    const handleReset = () => {
+      setSelectedTampered([]);
+      setSelectedDeleted([]);
+      setShowGameFeedback(false);
+      setGamePassed(false);
+      setCompletedSteps([]);
+      setStep("theory");
+    };
+
+    window.addEventListener("cosmos-x-nav-back", handleBack);
+    window.addEventListener("cosmos-x-nav-forward", handleForward);
+    window.addEventListener("cosmos-x-nav-reset", handleReset);
+
+    return () => {
+      window.removeEventListener("cosmos-x-nav-back", handleBack);
+      window.removeEventListener("cosmos-x-nav-forward", handleForward);
+      window.removeEventListener("cosmos-x-nav-reset", handleReset);
+    };
+  }, [step, completedSteps, currentIdx]);
 
   const toggleTamperedLog = (id: string) => {
     if (gamePassed) return;
@@ -396,7 +448,7 @@ export default function Task1_2_CorruptedServer({ onComplete }: { onComplete: ()
 
           {/* ── STEP 1: THEORY ── */}
           {step === "theory" && (
-            <motion.div key="theory" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-5 max-w-2xl">
+            <motion.div key="theory" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-6 w-full max-w-7xl">
               <div>
                 <p className="font-mono text-[8px] text-cyan-400 uppercase tracking-widest">Section 1: Core Theory</p>
                 <h2 className="text-xl font-bold text-white mt-0.5">Single Points of Failure</h2>
@@ -405,104 +457,139 @@ export default function Task1_2_CorruptedServer({ onComplete }: { onComplete: ()
                 </p>
               </div>
 
-              {/* Side-by-side database visualizer */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="rounded-xl border border-rose-500/20 bg-[#0b060f]/60 p-3 space-y-2">
-                  <span className="font-mono text-[8px] text-rose-400 uppercase tracking-wider block">Centralized database (Tampered)</span>
-                  <div className="h-32 flex items-center justify-center">
-                    <CentralizedTamperSVG corrupted={true} onTamper={() => {}} />
+              {/* Two-column layout grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full">
+                
+                {/* Left Column: text cards and buttons */}
+                <div className="lg:col-span-6 space-y-4">
+                  {/* Cards */}
+                  <div className="space-y-3">
+                    {[
+                      { tag: "SPF RISK", title: "Administrative Keys", text: "Database root keys or server access privileges allow administrators to wipe transaction logs, overwrite records, or forge funds without client consent.", color: "#ef4444", bg: "rgba(239,68,68,0.1)", border: "#ef4444" },
+                      { tag: "TAMPERING LORE", title: "Silent Integrity Breach", text: "Without independent database check nodes, clients have no fallback validation copies. Whatever the central server claims is accepted as absolute state truth.", color: "#f59e0b", bg: "rgba(245,158,11,0.1)", border: "#f59e0b" },
+                      { tag: "THE CURE", title: "Consensus Alignment", text: "By syncing data logs across multiple nodes, the system isolates compromised records. If one node alters a balance, it fails the consensus hash match.", color: "#10b981", bg: "rgba(16,185,129,0.1)", border: "#10b981" }
+                    ].map((card, i) => (
+                      <div key={i} className="rounded-xl border border-white/5 bg-slate-950/60 p-3.5 flex gap-3.5 relative overflow-hidden" style={{ borderLeft: `3px solid ${card.border}` }}>
+                        <div className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center" style={{ color: card.color, backgroundColor: card.bg }}>
+                          <Shield className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <span className="text-[8px] font-mono px-1 py-0.5 rounded" style={{ color: card.color, backgroundColor: card.bg }}>{card.tag}</span>
+                          <h4 className="text-xs font-bold text-white mt-1.5">{card.title}</h4>
+                          <p className="text-[11px] text-slate-300 leading-relaxed mt-1">{card.text}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button onClick={() => goToStep("demo")} className="px-5 py-2.5 bg-cyan-400/20 border border-cyan-400/40 text-cyan-300 hover:bg-cyan-400/30 text-xs font-bold font-mono rounded-xl transition flex items-center gap-1">
+                    Test Outage Sandbox <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                {/* Right Column: Visual simulation viewer stacked vertically */}
+                <div className="lg:col-span-6 space-y-4">
+                  <div className="rounded-xl border border-rose-500/20 bg-[#0b060f]/60 p-4 space-y-3">
+                    <span className="font-mono text-[9px] text-rose-400 uppercase tracking-wider block">Centralized database (Tampered)</span>
+                    <div className="h-40 flex items-center justify-center">
+                      <CentralizedTamperSVG corrupted={true} onTamper={() => {}} />
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-emerald-500/20 bg-[#040e0a]/60 p-4 space-y-3">
+                    <span className="font-mono text-[9px] text-emerald-400 uppercase tracking-wider block">Decentralized Replication Consensus</span>
+                    <div className="h-40 flex items-center justify-center">
+                      <ConsensusVerifySVG compromisedNode={1} onCompromise={() => {}} />
+                    </div>
                   </div>
                 </div>
-                <div className="rounded-xl border border-emerald-500/20 bg-[#040e0a]/60 p-3 space-y-2">
-                  <span className="font-mono text-[8px] text-emerald-400 uppercase tracking-wider block">Decentralized Replication Consensus</span>
-                  <div className="h-32 flex items-center justify-center">
-                    <ConsensusVerifySVG compromisedNode={1} onCompromise={() => {}} />
-                  </div>
-                </div>
-              </div>
 
-              {/* Cards */}
-              <div className="space-y-3">
-                {[
-                  { tag: "SPF RISK", title: "Administrative Keys", text: "Database root keys or server access privileges allow administrators to wipe transaction logs, overwrite records, or forge funds without client consent.", color: "#ef4444", bg: "rgba(239,68,68,0.1)", border: "#ef4444" },
-                  { tag: "TAMPERING LORE", title: "Silent Integrity Breach", text: "Without independent database check nodes, clients have no fallback validation copies. Whatever the central server claims is accepted as absolute state truth.", color: "#f59e0b", bg: "rgba(245,158,11,0.1)", border: "#f59e0b" },
-                  { tag: "THE CURE", title: "Consensus Alignment", text: "By syncing data logs across multiple nodes, the system isolates compromised records. If one node alters a balance, it fails the consensus hash match.", color: "#10b981", bg: "rgba(16,185,129,0.1)", border: "#10b981" }
-                ].map((card, i) => (
-                  <div key={i} className="rounded-xl border border-white/5 bg-slate-950/60 p-3.5 flex gap-3.5 relative overflow-hidden" style={{ borderLeft: `3px solid ${card.border}` }}>
-                    <div className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center" style={{ color: card.color, backgroundColor: card.bg }}>
-                      <Shield className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <span className="text-[8px] font-mono px-1 py-0.5 rounded" style={{ color: card.color, backgroundColor: card.bg }}>{card.tag}</span>
-                      <h4 className="text-xs font-bold text-white mt-1.5">{card.title}</h4>
-                      <p className="text-[11px] text-slate-300 leading-relaxed mt-1">{card.text}</p>
-                    </div>
-                  </div>
-                ))}
               </div>
-
-              <button onClick={() => goToStep("demo")} className="px-5 py-2.5 bg-cyan-400/20 border border-cyan-400/40 text-cyan-300 hover:bg-cyan-400/30 text-xs font-bold font-mono rounded-xl transition flex items-center gap-1">
-                Test Outage Sandbox <ChevronRight className="w-3.5 h-3.5" />
-              </button>
             </motion.div>
           )}
-
           {/* ── STEP 2: DEMO ── */}
           {step === "demo" && (
-            <motion.div key="demo" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-5 max-w-2xl">
-              <div>
-                <p className="font-mono text-[8px] text-cyan-400 uppercase tracking-widest">Section 2: Interactive Sandbox</p>
-                <h2 className="text-xl font-bold text-white mt-0.5">Simulate Administrative Tampering</h2>
-                <p className="text-xs text-slate-400 mt-1">Breach the servers below to alter accounts. Observe how clients update compared to a multi-node consensus.</p>
+            <motion.div
+              key="demo"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full max-w-7xl"
+            >
+              {/* Left Column: Title, description, mode selectors, CTA */}
+              <div className="lg:col-span-5 space-y-5 text-left">
+                <div>
+                  <p className="font-mono text-[8px] text-cyan-400 uppercase tracking-widest">Section 2: Interactive Sandbox</p>
+                  <h2 className="text-xl font-bold text-white mt-0.5">Simulate Administrative Tampering</h2>
+                  <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                    Breach the servers below to alter accounts. Observe how clients update compared to a multi-node consensus.
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  {(["central", "consensus"] as const).map((m) => (
+                    <button
+                      key={m}
+                      onClick={() => { setDemoMode(m); setDemoCentralCorrupted(false); setDemoConsensusCompromised(null); }}
+                      className={`rounded-xl border p-3.5 text-left transition-all cursor-pointer ${
+                        demoMode === m
+                          ? m === "central" ? "border-rose-400/50 bg-rose-500/10 shadow-[0_0_15px_rgba(239,68,68,0.05)]" : "border-emerald-400/50 bg-emerald-500/10 shadow-[0_0_15px_rgba(16,185,129,0.05)]"
+                          : "border-white/5 bg-slate-900/40 hover:bg-slate-900/70"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">{m === "central" ? "🖥" : "🖧"}</span>
+                        <h4 className="text-xs font-bold text-white">{m === "central" ? "Single DB Server (Centralized)" : "Consensus Nodes (Distributed)"}</h4>
+                      </div>
+                      <p className="text-[10px] text-slate-400 mt-1.5 leading-relaxed">
+                        {m === "central"
+                          ? "Single database instance. Hacking it updates all connected client views."
+                          : "Altering one node's data triggers mismatch alarms; others reject the update."}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => goToStep("quiz")}
+                  className="w-full py-3 bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold text-xs rounded-xl transition flex items-center justify-center gap-1 shadow-[0_0_15px_rgba(34,211,238,0.25)] cursor-pointer"
+                >
+                  Take the Quiz <ChevronRight className="w-4 h-4" />
+                </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                {(["central", "consensus"] as const).map((m) => (
-                  <button key={m} onClick={() => { setDemoMode(m); setDemoCentralCorrupted(false); setDemoConsensusCompromised(null); }}
-                    className={`rounded-xl border p-3.5 text-left transition-all ${
-                      demoMode === m
-                        ? m === "central" ? "border-rose-400/50 bg-rose-500/10" : "border-emerald-400/50 bg-emerald-500/10"
-                        : "border-white/10 hover:bg-white/3"
-                    }`}
-                  >
-                    <span className="text-xl">{m === "central" ? "🖥" : "🖧"}</span>
-                    <h4 className="text-xs font-bold text-white mt-1">{m === "central" ? "Single DB Server (Centralized)" : "Consensus Nodes (Distributed)"}</h4>
-                    <p className="text-[10px] text-slate-400 mt-0.5">{m === "central" ? "Single database instance. Hacking it updates all connected client views." : "Altering one node's data triggers mismatch alarms; others reject the update."}</p>
-                  </button>
-                ))}
-              </div>
+              {/* Right Column: Interactive visual simulation screen */}
+              <div className="lg:col-span-7 space-y-4">
+                <div className="rounded-xl border border-white/10 bg-slate-950/80 p-5 flex flex-col items-center justify-center min-h-[360px] relative overflow-hidden shadow-2xl">
+                  {/* Subtle decorative grid overlay */}
+                  <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-size-[16px_16px] pointer-events-none" />
 
-              <div className="rounded-xl border border-white/10 bg-slate-950/80 p-5 flex flex-col items-center justify-center min-h-[180px]">
-                {demoMode === "central" ? (
-                  <CentralizedTamperSVG corrupted={demoCentralCorrupted} onTamper={() => setDemoCentralCorrupted(!demoCentralCorrupted)} />
-                ) : (
-                  <ConsensusVerifySVG compromisedNode={demoConsensusCompromised} onCompromise={(idx) => setDemoConsensusCompromised(idx === demoConsensusCompromised ? null : idx)} />
-                )}
+                  <div className="relative z-10 w-full flex-1 flex items-center justify-center">
+                    {demoMode === "central" ? (
+                      <CentralizedTamperSVG corrupted={demoCentralCorrupted} onTamper={() => setDemoCentralCorrupted(!demoCentralCorrupted)} />
+                    ) : (
+                      <ConsensusVerifySVG compromisedNode={demoConsensusCompromised} onCompromise={(idx) => setDemoConsensusCompromised(idx === demoConsensusCompromised ? null : idx)} />
+                    )}
+                  </div>
 
-                <div className={`w-full mt-4 rounded-xl p-3 text-[11px] font-mono border ${
-                  demoCentralCorrupted || demoConsensusCompromised !== null
-                    ? "bg-rose-500/10 border-rose-500/20 text-rose-200"
-                    : "bg-white/5 border-white/5 text-slate-400"
-                }`}>
-                  {demoMode === "central" ? (
-                    demoCentralCorrupted
-                      ? "⚠ Alert: Admin keys leaked. Central database rewritten to fake state values. Connected users C1-C4 received altered files."
-                      : "Click the Central DB node above to simulate database record alteration:"
-                  ) : (
-                    demoConsensusCompromised !== null
-                      ? `⚠ Alert: Node ${demoConsensusCompromised + 1} tampered. Hash mismatch detected! Node isolated, network remains secure.`
-                      : "Click Node 1, 2, or 3 above to tamper with individual database copies:"
-                  )}
+                  <div className={`relative z-10 w-full mt-4 rounded-xl p-3 text-[11px] font-mono border text-left ${
+                    demoCentralCorrupted || demoConsensusCompromised !== null
+                      ? "bg-rose-500/10 border-rose-500/20 text-rose-200"
+                      : "bg-white/5 border-white/5 text-slate-400"
+                  }`}>
+                    {demoMode === "central" ? (
+                      demoCentralCorrupted
+                        ? "⚠ Alert: Admin keys leaked. Central database rewritten to fake state values. Connected users A-D received altered files."
+                        : "Click the Central DB node above to simulate database record alteration:"
+                      ) : (
+                      demoConsensusCompromised !== null
+                        ? `⚠ Alert: Node ${demoConsensusCompromised + 1} tampered. Hash mismatch detected! Node isolated, network remains secure.`
+                        : "Click Node 1, 2, or 3 above to tamper with individual database copies:"
+                    )}
+                  </div>
                 </div>
               </div>
-
-              <button onClick={() => goToStep("quiz")} className="w-full py-2.5 bg-cyan-400 text-slate-950 font-bold text-xs rounded-xl hover:bg-cyan-300 transition flex items-center justify-center gap-1 shadow-[0_0_15px_rgba(34,211,238,0.25)]">
-                Take the Quiz <ChevronRight className="w-4 h-4" />
-              </button>
             </motion.div>
-          )}
-
-          {/* ── STEP 3: QUIZ ── */}
+          )}          {/* ── STEP 3: QUIZ ── */}
           {step === "quiz" && (
             <motion.div key="quiz" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4 max-w-2xl">
               <div>

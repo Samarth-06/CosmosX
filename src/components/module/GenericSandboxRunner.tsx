@@ -22,6 +22,37 @@ import {
 import { TaskDef } from "@/lib/mercury-curriculum";
 import { saveTaskScore } from "@/lib/module1-store";
 import CosmosTerminal, { TerminalMissionId } from "@/components/module/CosmosTerminal";
+import AppendOnlyLedgerSimulation from "@/components/module/AppendOnlyLedgerSimulation";
+import TransactionLifecycleSimulation from "@/components/module/TransactionLifecycleSimulation";
+import GenesisBlockSimulation from "@/components/module/GenesisBlockSimulation";
+import NetworkThroughputSimulation from "@/components/module/NetworkThroughputSimulation";
+import ChainIntegritySimulation from "@/components/module/ChainIntegritySimulation";
+import ChapterChallengeSimulation from "@/components/module/ChapterChallengeSimulation";
+import CryptographicHashSimulation from "@/components/module/CryptographicHashSimulation";
+import AvalancheEffectSimulation from "@/components/module/AvalancheEffectSimulation";
+import HashingVsEncryptionSimulation from "@/components/module/HashingVsEncryptionSimulation";
+import AlienTransmissionSimulation from "@/components/module/AlienTransmissionSimulation";
+import Sha256CalibrationChallenge from "@/components/module/Sha256CalibrationChallenge";
+import HashLinkChainMonitor from "@/components/module/HashLinkChainMonitor";
+import BlockDominoMonitor from "@/components/module/BlockDominoMonitor";
+import BlockHeaderSealingEngine from "@/components/module/BlockHeaderSealingEngine";
+import DecentralizedConsensusCommand from "@/components/module/DecentralizedConsensusCommand";
+import GalacticBlockchainRepair from "@/components/module/GalacticBlockchainRepair";
+import NetworkTopologyCommandCenter from "@/components/module/NetworkTopologyCommandCenter";
+import BlockchainNodeOperations from "@/components/module/BlockchainNodeOperations";
+import P2PGossipPropagation from "@/components/module/P2PGossipPropagation";
+import FaultToleranceCommand from "@/components/module/FaultToleranceCommand";
+import MercuryNetworkRecovery from "@/components/module/MercuryNetworkRecovery";
+import ByzantineConsensusWarRoom from "@/components/module/ByzantineConsensusWarRoom";
+import PoWvsPoSSimulation from "@/components/module/PoWvsPoSSimulation";
+import FederatedConsensusSimulator from "@/components/module/FederatedConsensusSimulator";
+import DoubleSpendAuditor from "@/components/module/DoubleSpendAuditor";
+import GalacticCouncilConsensus from "@/components/module/GalacticCouncilConsensus";
+import SupplyChainAuditTracker from "@/components/module/SupplyChainAuditTracker";
+import BlockchainTradeoffsCalculator from "@/components/module/BlockchainTradeoffsCalculator";
+import RealWorldUseCasesMatcher from "@/components/module/RealWorldUseCasesMatcher";
+import DatabaseVsBlockchainMatrix from "@/components/module/DatabaseVsBlockchainMatrix";
+import GalacticTechnologyDecision from "@/components/module/GalacticTechnologyDecision";
 
 interface Props {
   taskDef: TaskDef;
@@ -359,8 +390,24 @@ const TASK_MCQ: Record<string, MCQQuestion[]> = {
   ],
 };
 
+type Step = "theory" | "challenge" | "complete";
+
+interface SidebarTask {
+  id: Step;
+  label: string;
+  hint: string;
+  icon: string;
+}
+
+const SIDEBAR_TASKS: SidebarTask[] = [
+  { id: "theory", label: "Core Theory", hint: "Review technical concepts and key terms.", icon: "📖" },
+  { id: "challenge", label: "Active Lab", hint: "Interact with widgets/inputs to verify parameters.", icon: "🔬" },
+  { id: "complete", label: "Verification", hint: "Confirm analysis and lock checkpoint.", icon: "🏆" },
+];
+
 // ─── Main Component ─────────────────────────────────────────────────────────
 export default function GenericSandboxRunner({ taskDef, moduleColor, onComplete }: Props) {
+  const [step, setStep] = useState<Step>("theory");
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -399,6 +446,7 @@ export default function GenericSandboxRunner({ taskDef, moduleColor, onComplete 
     setValApprovals({});
     setDoubleSpendStep(null);
     setTamperIndex(null);
+    setStep("theory");
     setBlockchainBlocks([
       { id: 1, hash: "0000a12f", prev: "00000000", status: "valid", data: "Genesis block allocation" },
       { id: 2, hash: "0000e39a", prev: "0000a12f", status: "valid", data: "Tx: Alpha → 300 → Beta" },
@@ -407,6 +455,72 @@ export default function GenericSandboxRunner({ taskDef, moduleColor, onComplete 
       { id: 5, hash: "0000f91a", prev: "0000d8c2", status: "valid", data: "Tx: Beta → 50 → Alpha" },
     ]);
   }, [taskDef.id]);
+
+  const stepsOrder: Step[] = ["theory", "challenge", "complete"];
+  const currentIdx = stepsOrder.indexOf(step);
+
+  useEffect(() => {
+    if (success) {
+      setStep("complete");
+    }
+  }, [success]);
+
+  useEffect(() => {
+    const notifyState = () => {
+      const urlMapping: Record<Step, string> = {
+        theory: "theory",
+        challenge: "active-lab",
+        complete: "verification",
+      };
+      
+      window.dispatchEvent(
+        new CustomEvent("cosmos-x-nav-state", {
+          detail: {
+            canGoBack: currentIdx > 0,
+            canGoForward: currentIdx < stepsOrder.length - 1 && (stepsOrder[currentIdx + 1] !== "complete" || success),
+            currentStep: urlMapping[step],
+          },
+        })
+      );
+    };
+    notifyState();
+
+    const handleBack = () => {
+      if (currentIdx > 0) {
+        setStep(stepsOrder[currentIdx - 1]);
+      }
+    };
+    const handleForward = () => {
+      if (currentIdx < stepsOrder.length - 1 && (stepsOrder[currentIdx + 1] !== "complete" || success)) {
+        setStep(stepsOrder[currentIdx + 1]);
+      }
+    };
+    const handleReset = () => {
+      setInputs({});
+      setErrorMessage(null);
+      setSuccess(false);
+      setSubmitted(false);
+      setShowHint(false);
+      setHintStep(0);
+      setSelectedSequence([]);
+      setClassifications({});
+      setSelectedNodes([]);
+      setValApprovals({});
+      setDoubleSpendStep(null);
+      setTamperIndex(null);
+      setStep("theory");
+    };
+
+    window.addEventListener("cosmos-x-nav-back", handleBack);
+    window.addEventListener("cosmos-x-nav-forward", handleForward);
+    window.addEventListener("cosmos-x-nav-reset", handleReset);
+
+    return () => {
+      window.removeEventListener("cosmos-x-nav-back", handleBack);
+      window.removeEventListener("cosmos-x-nav-forward", handleForward);
+      window.removeEventListener("cosmos-x-nav-reset", handleReset);
+    };
+  }, [step, success, currentIdx]);
 
   const handleInputChange = (key: string, val: string) => {
     setInputs(prev => ({ ...prev, [key]: val }));
@@ -489,152 +603,276 @@ export default function GenericSandboxRunner({ taskDef, moduleColor, onComplete 
   const terminalMission = TERMINAL_MISSION_BY_TASK[taskDef.id];
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col overflow-hidden bg-slate-950/20">
-      {/* Task Header */}
-      <div
-        className="flex items-center justify-between px-4 py-2 bg-slate-950/80 border-b border-white/10 shrink-0 select-none"
-        style={{ borderLeftColor: moduleColor, borderLeftWidth: "3px" }}
-      >
-        <div className="flex items-center gap-3">
-          <div
-            className="p-2 border rounded-lg shrink-0"
-            style={{ backgroundColor: `${moduleColor}15`, borderColor: `${moduleColor}30`, color: moduleColor }}
-          >
-            <Terminal className="w-4 h-4" />
-          </div>
-          <div>
-            <h3 className="font-rushblade text-white text-xs tracking-wider uppercase truncate">{taskDef.title}</h3>
-            <p className="text-[9px] text-muted-foreground uppercase tracking-widest font-mono">Concept: {taskDef.concept}</p>
-          </div>
+    <div className="flex-1 min-h-0 flex bg-[#040816] text-white overflow-hidden w-full h-full">
+      {/* Chapter internal navigation */}
+      <aside className="w-52 shrink-0 border-r border-white/10 bg-slate-950/40 flex flex-col overflow-hidden">
+        <div className="px-4 py-3 border-b border-white/8 shrink-0">
+          <p className="font-mono text-[8px] text-slate-500 uppercase tracking-widest">
+            {taskDef.id.replace("task", "Task ").replace("_", ".")}
+          </p>
+          <h3 className="font-rushblade text-xs text-white mt-1 leading-snug truncate" style={{ color: moduleColor }}>
+            {taskDef.title.split(" — ")[1] || taskDef.title.split(" – ")[1] || taskDef.title}
+          </h3>
         </div>
-        <span
-          className="text-[9px] font-mono font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border shrink-0"
-          style={{ color: moduleColor, borderColor: `${moduleColor}40`, backgroundColor: `${moduleColor}10` }}
-        >
-          Active checkpoint
-        </span>
-      </div>
 
-      {/* 3-Panel Main Layout */}
-      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-white/5 overflow-hidden">
+        <nav className="flex-1 overflow-y-auto px-2.5 py-3 space-y-1 scrollbar-none">
+          {SIDEBAR_TASKS.map((t) => {
+            const isActive = step === t.id;
+            const isDone = t.id === "theory" ? step !== "theory" : t.id === "challenge" ? success : false;
+            const unlocked = true;
 
-        {/* Panel 1: Theory (Left - span 4) */}
-        <div className="lg:col-span-4 flex flex-col h-full overflow-hidden bg-slate-950/20">
-          <div
-            className="flex items-center gap-2 px-4 py-2 border-b border-white/5 shrink-0"
-            style={{ backgroundColor: `${moduleColor}08` }}
-          >
-            <BookOpen className="w-3.5 h-3.5" style={{ color: moduleColor }} />
-            <span className="text-[9px] font-mono uppercase tracking-widest text-slate-400">Technical Theory</span>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
-            {/* Simple intro badge */}
-            <div className="border-b pb-2" style={{ borderColor: `${moduleColor}20` }}>
-              <span className="text-[8px] font-mono uppercase tracking-widest font-bold" style={{ color: moduleColor }}>
-                {taskDef.concept}
-              </span>
-              <h4 className="font-rushblade text-white text-[11px] tracking-wider uppercase mt-0.5"
-                style={{ textShadow: `0 0 10px ${moduleColor}60` }}>
-                {taskDef.title.split(" — ")[1] || taskDef.title}
-              </h4>
-            </div>
-
-            {/* Theory text with keyword highlights */}
-            <TheorySection text={taskDef.theoryText} color={moduleColor} />
-
-            {/* Key Terms */}
-            {taskDef.keyTerms && taskDef.keyTerms.length > 0 && (
-              <div
-                className="border rounded-2xl p-3.5 space-y-3"
-                style={{ borderColor: `${moduleColor}25`, backgroundColor: `${moduleColor}05` }}
+            return (
+              <button
+                key={t.id}
+                onClick={() => unlocked && setStep(t.id)}
+                disabled={!unlocked}
+                className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-left transition-all text-[10px] font-mono ${
+                  isActive
+                    ? "bg-cyan-500/10 border border-cyan-400/20 text-cyan-300"
+                    : isDone
+                    ? "bg-emerald-500/5 border border-emerald-400/15 text-emerald-400"
+                    : unlocked
+                    ? "text-slate-400 hover:bg-white/5"
+                    : "text-slate-700 cursor-not-allowed"
+                }`}
               >
-                <div className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
-                  <Info className="w-3.5 h-3.5" style={{ color: moduleColor }} />
-                  <span>Key Terms Glossary</span>
-                </div>
-                <div className="space-y-2">
-                  {taskDef.keyTerms.map((term, idx) => (
-                    <div key={idx} className="border border-white/5 bg-slate-950/60 p-2.5 rounded-xl">
-                      <span className="font-mono font-bold text-[10px] block" style={{ color: moduleColor }}>
-                        {term.term}
-                      </span>
-                      <span className="text-slate-400 text-[9.5px] mt-0.5 block leading-relaxed">{term.definition}</span>
+                <span className={`w-5 h-5 rounded-lg border flex items-center justify-center shrink-0 text-[8px] ${
+                  isDone ? "border-emerald-400/60 bg-emerald-400/10 text-emerald-400" : isActive ? "border-cyan-400/60 bg-cyan-400/10 text-cyan-400" : "border-white/10 text-slate-600"
+                }`}>
+                  {isDone ? "✓" : !unlocked ? <Lock className="w-2.5 h-2.5" /> : t.icon}
+                </span>
+                <span className="truncate">{t.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="p-3 bg-violet-500/5 border-t border-white/5 text-[9px] text-slate-400 leading-relaxed shrink-0">
+          <span className="font-bold text-violet-300 block mb-0.5">Objective:</span>
+          {taskDef.concept}
+        </div>
+      </aside>
+
+      {/* Main page content container */}
+      <main className="flex-1 overflow-y-auto p-6 relative">
+        <AnimatePresence mode="wait">
+          {/* STEP 1: THEORY */}
+          {step === "theory" && (
+            <motion.div
+              key="theory"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="space-y-6 w-full max-w-7xl"
+            >
+              <div>
+                <p className="font-mono text-[8px] uppercase tracking-widest" style={{ color: moduleColor }}>
+                  Section 1: Technical Theory
+                </p>
+                <h2 className="text-xl font-bold text-white mt-0.5">
+                  {taskDef.title.split(" — ")[1] || taskDef.title.split(" – ")[1] || taskDef.title}
+                </h2>
+                <p className="text-xs text-slate-400 leading-relaxed mt-1">{taskDef.concept}</p>
+              </div>
+
+              {/* Two-column layout grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full">
+                
+                {/* Left Column: Theory prose, glossary and proceed button */}
+                <div className={["task2_2", "task2_3", "task3_2", "task3_3", "task3_4", "task3_5", "task4_1", "task4_2", "task4_3", "task4_4", "task4_5", "task5_1", "task5_2", "task5_3", "task5_4", "task5_5", "task6_1", "task6_2", "task6_3", "task6_4", "task6_5"].includes(taskDef.id) ? "lg:col-span-5 space-y-4" : "lg:col-span-7 space-y-4"}>
+                  <TheorySection text={taskDef.theoryText} color={moduleColor} />
+                  
+                  {["task2_2", "task2_3", "task3_2", "task3_3", "task3_4", "task3_5", "task4_1", "task4_2", "task4_3", "task4_4", "task4_5", "task5_1", "task5_2", "task5_3", "task5_4", "task5_5", "task6_1", "task6_2", "task6_3", "task6_4", "task6_5"].includes(taskDef.id) && taskDef.keyTerms && taskDef.keyTerms.length > 0 && (
+                    <div
+                       className="border rounded-2xl p-4 space-y-3"
+                       style={{ borderColor: `${moduleColor}25`, backgroundColor: `${moduleColor}05` }}
+                    >
+                      <div className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+                        <Info className="w-3.5 h-3.5" style={{ color: moduleColor }} />
+                        <span>Key Terms Glossary</span>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        {taskDef.keyTerms.map((term, idx) => (
+                          <div key={idx} className="border border-white/5 bg-slate-950/60 p-2.5 rounded-xl">
+                            <span className="font-mono font-bold text-[10px] block" style={{ color: moduleColor }}>
+                              {term.term}
+                            </span>
+                            <span className="text-slate-400 text-[9.5px] mt-0.5 block leading-relaxed">{term.definition}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  ))}
+                  )}
+
+                  <div className="flex justify-start pt-2">
+                    <button
+                      onClick={() => setStep("challenge")}
+                      style={{ backgroundColor: moduleColor }}
+                      className="text-slate-950 font-bold px-5 py-2.5 rounded-xl text-xs font-mono flex items-center gap-1.5 hover:opacity-90 transition cursor-pointer"
+                    >
+                      Proceed to Challenge <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
+
+                {/* Right Column: Visual Simulation or Key Terms Glossary */}
+                <div className={["task2_2", "task2_3", "task3_2", "task3_3", "task3_4", "task3_5", "task4_1", "task4_2", "task4_3", "task4_4", "task4_5", "task5_1", "task5_2", "task5_3", "task5_4", "task5_5", "task6_1", "task6_2", "task6_3", "task6_4", "task6_5", "task7_1", "task7_2", "task7_3", "task7_4", "task7_5", "task8_1", "task8_2", "task8_3", "task8_4", "task8_5"].includes(taskDef.id) ? "lg:col-span-7 space-y-4" : "lg:col-span-5"}>
+                  {taskDef.id === "task2_2" ? (
+                    <AppendOnlyLedgerSimulation color={moduleColor} />
+                  ) : taskDef.id === "task2_3" ? (
+                    <TransactionLifecycleSimulation color={moduleColor} />
+                  ) : taskDef.id === "task3_2" ? (
+                    <GenesisBlockSimulation color={moduleColor} />
+                  ) : taskDef.id === "task3_3" ? (
+                    <NetworkThroughputSimulation color={moduleColor} />
+                  ) : taskDef.id === "task3_4" ? (
+                    <ChainIntegritySimulation color={moduleColor} />
+                  ) : taskDef.id === "task3_5" ? (
+                    <ChapterChallengeSimulation color={moduleColor} />
+                  ) : taskDef.id === "task4_1" ? (
+                    <CryptographicHashSimulation color={moduleColor} />
+                  ) : taskDef.id === "task4_2" ? (
+                    <AvalancheEffectSimulation color={moduleColor} />
+                  ) : taskDef.id === "task4_3" ? (
+                    <HashingVsEncryptionSimulation color={moduleColor} />
+                  ) : taskDef.id === "task4_4" ? (
+                    <AlienTransmissionSimulation color={moduleColor} />
+                  ) : taskDef.id === "task4_5" ? (
+                    <Sha256CalibrationChallenge color={moduleColor} />
+                  ) : taskDef.id === "task5_1" ? (
+                    <HashLinkChainMonitor color={moduleColor} />
+                  ) : taskDef.id === "task5_2" ? (
+                    <BlockDominoMonitor color={moduleColor} />
+                  ) : taskDef.id === "task5_3" ? (
+                    <BlockHeaderSealingEngine color={moduleColor} />
+                  ) : taskDef.id === "task5_4" ? (
+                    <DecentralizedConsensusCommand color={moduleColor} />
+                  ) : taskDef.id === "task5_5" ? (
+                    <GalacticBlockchainRepair color={moduleColor} />
+                  ) : taskDef.id === "task6_1" ? (
+                    <NetworkTopologyCommandCenter color={moduleColor} />
+                  ) : taskDef.id === "task6_2" ? (
+                    <BlockchainNodeOperations color={moduleColor} />
+                  ) : taskDef.id === "task6_3" ? (
+                    <P2PGossipPropagation color={moduleColor} />
+                  ) : taskDef.id === "task6_4" ? (
+                    <FaultToleranceCommand color={moduleColor} />
+                  ) : taskDef.id === "task6_5" ? (
+                    <MercuryNetworkRecovery color={moduleColor} />
+                  ) : taskDef.id === "task7_1" ? (
+                    <ByzantineConsensusWarRoom color={moduleColor} />
+                  ) : taskDef.id === "task7_2" ? (
+                    <PoWvsPoSSimulation color={moduleColor} />
+                  ) : taskDef.id === "task7_3" ? (
+                    <FederatedConsensusSimulator color={moduleColor} />
+                  ) : taskDef.id === "task7_4" ? (
+                    <DoubleSpendAuditor color={moduleColor} />
+                  ) : taskDef.id === "task7_5" ? (
+                    <GalacticCouncilConsensus color={moduleColor} />
+                  ) : taskDef.id === "task8_1" ? (
+                    <SupplyChainAuditTracker color={moduleColor} />
+                  ) : taskDef.id === "task8_2" ? (
+                    <BlockchainTradeoffsCalculator color={moduleColor} />
+                  ) : taskDef.id === "task8_3" ? (
+                    <RealWorldUseCasesMatcher color={moduleColor} />
+                  ) : taskDef.id === "task8_4" ? (
+                    <DatabaseVsBlockchainMatrix color={moduleColor} />
+                  ) : taskDef.id === "task8_5" ? (
+                    <GalacticTechnologyDecision color={moduleColor} />
+                  ) : (
+                    taskDef.keyTerms && taskDef.keyTerms.length > 0 && (
+                      <div
+                        className="border rounded-2xl p-4 space-y-3"
+                        style={{ borderColor: `${moduleColor}25`, backgroundColor: `${moduleColor}05` }}
+                      >
+                        <div className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+                          <Info className="w-3.5 h-3.5" style={{ color: moduleColor }} />
+                          <span>Key Terms Glossary</span>
+                        </div>
+                        <div className="flex flex-col gap-3">
+                          {taskDef.keyTerms.map((term, idx) => (
+                            <div key={idx} className="border border-white/5 bg-slate-950/60 p-3 rounded-xl">
+                              <span className="font-mono font-bold text-[10px] block" style={{ color: moduleColor }}>
+                                {term.term}
+                              </span>
+                              <span className="text-slate-400 text-[9.5px] mt-0.5 block leading-relaxed">{term.definition}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  )}
+                </div>
+
               </div>
-            )}
-          </div>
-        </div>
+            </motion.div>
+          )}
 
-        {/* Panel 2: Scenario + MCQ (Center - span 4) */}
-        <div className="lg:col-span-4 flex flex-col h-full overflow-hidden bg-slate-950/40">
-          <div className="flex items-center gap-2 px-4 py-2 border-b border-white/5 shrink-0 bg-slate-900/30">
-            <FlaskConical className="w-3.5 h-3.5 text-amber-400" />
-            <span className="text-[9px] font-mono uppercase tracking-widest text-slate-400">Mission Parameters</span>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-4 scrollbar-thin">
-            {hasMCQ ? (
-              <MCQPanel
-                questions={TASK_MCQ[taskDef.id]}
-                color={moduleColor}
-                taskId={taskDef.id}
-                onComplete={() => {
-                  // MCQ complete — mark task done
-                  setSuccess(true);
-                  saveTaskScore(taskDef.id, 10, 10, true);
-                }}
-              />
-            ) : (
-              <div className="space-y-4">
-                {/* Setup text as styled scenario */}
-                <div className="bg-slate-900/50 rounded-2xl border border-white/5 p-3.5">
-                  <div className="text-[8.5px] font-mono uppercase tracking-widest mb-2 flex items-center gap-1.5"
-                    style={{ color: moduleColor }}>
-                    <Zap className="w-3 h-3" /> Scenario Setup
+          {/* STEP 2: CHALLENGE */}
+          {step === "challenge" && (
+            <motion.div
+              key="challenge"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="h-full"
+            >
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full items-stretch min-h-0">
+                {/* Left Column: Parameters */}
+                <div className="lg:col-span-5 flex flex-col gap-4 overflow-y-auto pr-1">
+                  <div className="bg-slate-900/50 rounded-2xl border border-white/5 p-4">
+                    <div className="text-[8.5px] font-mono uppercase tracking-widest mb-2 flex items-center gap-1.5" style={{ color: moduleColor }}>
+                      <Zap className="w-3 h-3" /> Scenario Setup
+                    </div>
+                    <div className="text-[10.5px] text-slate-300 font-sans leading-relaxed whitespace-pre-line border-l-2 pl-3" style={{ borderColor: `${moduleColor}40` }}>
+                      {taskDef.practical.setupText || "Review the technical checkpoint check questions on the console to proceed."}
+                    </div>
                   </div>
-                  <div className="text-[10.5px] text-slate-300 font-sans leading-relaxed whitespace-pre-line border-l-2 pl-3"
-                    style={{ borderColor: `${moduleColor}40` }}>
-                    {taskDef.practical.setupText}
+
+                  <div className="bg-slate-900/50 border border-white/10 rounded-2xl p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <HelpCircle className="w-4 h-4 text-cyan-400" />
+                      <span className="text-[9px] font-mono uppercase tracking-widest text-slate-400">Audit Challenge</span>
+                    </div>
+                    <p className="text-[11.5px] text-white font-sans leading-relaxed font-semibold">
+                      {hasMCQ ? "Answer the core conceptual checks on the right to complete validation for this gate." : taskDef.practical.question}
+                    </p>
                   </div>
                 </div>
 
-                <div className="bg-slate-900/50 border border-white/10 rounded-2xl p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <HelpCircle className="w-4 h-4 text-cyan-400" />
-                    <span className="text-[9px] font-mono uppercase tracking-widest text-slate-400">Audit Challenge</span>
+                {/* Right Column: Console / MCQ */}
+                <div className="lg:col-span-7 flex flex-col border border-white/10 bg-slate-950/60 rounded-2xl overflow-hidden min-h-[360px] lg:min-h-0">
+                  <div className="flex items-center gap-2 px-4 py-2 border-b border-white/5 bg-slate-900/30">
+                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                    <span className="text-[9px] font-mono uppercase tracking-widest text-slate-400 font-bold">
+                      {hasMCQ ? "Validation Checkpoint Console" : "Interactive Lab Console"}
+                    </span>
                   </div>
-                  <p className="text-[11.5px] text-white font-sans leading-relaxed font-semibold">
-                    {taskDef.practical.question}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
 
-        {/* Panel 3: Interactive Lab (Right - span 4) */}
-        <div className="lg:col-span-4 flex flex-col h-full overflow-hidden bg-slate-950/60">
-          <div className="flex items-center gap-2 px-4 py-2 border-b border-white/5 shrink-0 bg-slate-900/30">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-            <span className="text-[9px] font-mono uppercase tracking-widest text-slate-400">Interactive Lab Console</span>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 scrollbar-thin justify-between">
-            {/* Widget Area */}
-            <div className="border border-white/10 bg-slate-950/90 rounded-2xl p-3.5 flex flex-col gap-3">
-
-              {/* INSPECTOR WIDGET */}
-              {taskDef.practical.type === "inspector" && (
-                <div className="space-y-3">
-                  <div className="text-[8.5px] font-mono uppercase tracking-widest text-center" style={{ color: moduleColor }}>
-                    🔍 Payload Dissector Active
-                  </div>
-                  <div className="bg-black/80 border border-white/10 rounded-xl p-3 font-mono text-[9px] max-h-[200px] overflow-y-auto scrollbar-thin select-all">
-                    {taskDef.id === "task2_1" && (
-                      <pre className="text-emerald-400 leading-relaxed">{`{
+                  <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 justify-between scrollbar-thin">
+                    {hasMCQ ? (
+                      <MCQPanel
+                        questions={TASK_MCQ[taskDef.id]}
+                        color={moduleColor}
+                        taskId={taskDef.id}
+                        onComplete={() => {
+                          setSuccess(true);
+                          saveTaskScore(taskDef.id, 10, 10, true);
+                        }}
+                      />
+                    ) : (
+                      <>
+                        {/* Widget Area */}
+                        <div className="border border-white/10 bg-slate-950/90 rounded-2xl p-3.5 flex flex-col gap-3">
+                        {/* INSPECTOR WIDGET */}
+                        {taskDef.practical.type === "inspector" && (
+                          <div className="space-y-3">
+                            <div className="text-[8.5px] font-mono uppercase tracking-widest text-center" style={{ color: moduleColor }}>
+                              🔍 Payload Dissector Active
+                            </div>
+                            <div className="bg-black/80 border border-white/10 rounded-xl p-3 font-mono text-[9px] max-h-[200px] overflow-y-auto scrollbar-thin select-all">
+                              {taskDef.id === "task2_1" && (
+                                <pre className="text-emerald-400 leading-relaxed">{`{
   "sender": "G_ALPHA_STATION_77",
   "receiver": "G_BETA_RECON_89",
   "amount": 250.00,
@@ -642,9 +880,9 @@ export default function GenericSandboxRunner({ taskDef, moduleColor, onComplete 
   "sequence": 48291,
   "signature": "Sig_378a9c2b..."
 }`}</pre>
-                    )}
-                    {taskDef.id === "task3_1" && (
-                      <pre className="text-cyan-400 leading-relaxed">{`{
+                              )}
+                              {taskDef.id === "task3_1" && (
+                                <pre className="text-cyan-400 leading-relaxed">{`{
   "header": {
     "block_height": 849,
     "timestamp": 1782294910,
@@ -653,23 +891,23 @@ export default function GenericSandboxRunner({ taskDef, moduleColor, onComplete 
   },
   "body": { "transactions_count": 4 }
 }`}</pre>
-                    )}
-                    {taskDef.id === "task3_2" && (
-                      <pre className="text-amber-400 leading-relaxed">{`{
+                              )}
+                              {taskDef.id === "task3_2" && (
+                                <pre className="text-amber-400 leading-relaxed">{`{
   "block_height": 0,
   "prev_block_id": "000000000000000000000000000000000000000000000000",
   "timestamp": 1782200000,
   "network_id": "MERCURY_TESTNET_GENESIS",
   "secret_message": "Mercury Launchpad Coordinates Unlocked 2026"
 }`}</pre>
-                    )}
-                    {taskDef.id === "task5_1" && (
-                      <pre className="text-purple-400 leading-relaxed">{`Block 1: { hash: "0000a12fbc99", prev: "00000000" }
+                              )}
+                              {taskDef.id === "task5_1" && (
+                                <pre className="text-purple-400 leading-relaxed">{`Block 1: { hash: "0000a12fbc99", prev: "00000000" }
 Block 2: { hash: "0000e39a88cd", prev_block_id: "0000a12fbc99" }
 Block 3: { hash: "0000b21fa7e1", prev_block_id: "0000e39a88cd" }`}</pre>
-                    )}
-                    {taskDef.id === "task6_2" && (
-                      <pre className="text-orange-400 leading-relaxed">{`{
+                              )}
+                              {taskDef.id === "task6_2" && (
+                                <pre className="text-orange-400 leading-relaxed">{`{
   "node_id": "MERCURY_VALIDATOR_09",
   "storage": { "sync_mode": "full_history" },
   "consensus": {
@@ -677,422 +915,411 @@ Block 3: { hash: "0000b21fa7e1", prev_block_id: "0000e39a88cd" }`}</pre>
     "quorum_set": ["NODE_ALPHA", "NODE_BETA"]
   }
 }`}</pre>
-                    )}
-                    {taskDef.id === "task8_1" && (
-                      <pre className="text-sky-400 leading-relaxed">{`Tx 1: G_MARS_MINE_01 mints 50 units → [Hash: 0xMINT]
+                              )}
+                              {taskDef.id === "task8_1" && (
+                                <pre className="text-sky-400 leading-relaxed">{`Tx 1: G_MARS_MINE_01 mints 50 units → [Hash: 0xMINT]
 Tx 2: G_MARS_MINE_01 → G_SHIPPING_CORP  → [Hash: 0xSHIP]
 Tx 3: G_SHIPPING_CORP → G_STATION_BETA  → [Hash: 0xDELIVER]
 Tx 4: G_SMUGGLER_VOID → G_STATION_BETA  → [Hash: 0xILLEGAL]`}</pre>
-                    )}
-                    {!["task2_1","task3_1","task3_2","task5_1","task6_2","task8_1"].includes(taskDef.id) && (
-                      <pre className="text-slate-300 leading-relaxed whitespace-pre-wrap">{taskDef.practical.setupText}</pre>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* TERMINAL AUDIT WIDGET */}
-              {taskDef.practical.type === "terminal-audit" && terminalMission && (
-                <CosmosTerminal
-                  mission={terminalMission}
-                  accent={moduleColor}
-                  compact
-                  onObjectiveComplete={() => {
-                    setSubmitted(true);
-                    setSuccess(true);
-                    setErrorMessage(null);
-                    setShowHint(false);
-                    saveTaskScore(taskDef.id, 10, 10, true);
-                  }}
-                />
-              )}
-
-              {/* DRAG AND DROP */}
-              {taskDef.practical.type === "drag-drop" && (
-                <div className="space-y-3">
-                  {(taskDef.id === "task2_3" || taskDef.id === "task3_4") && (
-                    <div className="space-y-2">
-                      <div className="text-[9px] font-mono text-slate-400 text-center">Click letters to build sequence order:</div>
-                      <div className="flex flex-wrap gap-2 justify-center">
-                        {getDragLetters().map((letter, idx) => {
-                          const isSel = selectedSequence.includes(letter);
-                          const pos = selectedSequence.indexOf(letter);
-                          return (
-                            <button
-                              key={`${letter}-${idx}`}
-                              onClick={() => handleSeqClick(letter)}
-                              style={{
-                                borderColor: isSel ? moduleColor : "rgba(255,255,255,0.1)",
-                                backgroundColor: isSel ? `${moduleColor}20` : "rgba(15,23,42,0.4)",
-                              }}
-                              className="w-10 h-10 rounded-xl border font-mono font-bold flex flex-col items-center justify-center transition-all relative text-xs text-white hover:scale-105"
-                            >
-                              {letter}
-                              {isSel && <span className="absolute top-0.5 right-1 text-[7px] font-bold" style={{ color: moduleColor }}>{pos + 1}</span>}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      <div className="bg-slate-900/60 p-2 border border-white/5 rounded-xl text-center font-mono text-[10px]">
-                        <span className="text-slate-500 uppercase mr-2">Sequence:</span>
-                        <span className="font-bold text-white tracking-widest">{selectedSequence.join("") || "—"}</span>
-                      </div>
-                      {selectedSequence.length > 0 && (
-                        <button onClick={() => setSelectedSequence([])} className="w-full text-[8.5px] font-mono text-slate-500 hover:text-slate-300 uppercase tracking-widest">
-                          Reset
-                        </button>
-                      )}
-                    </div>
-                  )}
-
-                  {(taskDef.id === "task4_3" || taskDef.id === "task7_2") && (
-                    <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1 scrollbar-thin">
-                      <div className="text-[8.5px] font-mono text-slate-400 text-center mb-1">Toggle classification for each statement:</div>
-                      {Array.from({ length: 6 }).map((_, idx) => {
-                        const id = idx + 1;
-                        const [opt1, opt2] = taskDef.id === "task4_3" ? ["H", "E"] : ["W", "S"];
-                        const [label1, label2] = taskDef.id === "task4_3" ? ["Hashing", "Encrypt"] : ["PoW", "PoS"];
-                        const cur = classifications[id];
-                        return (
-                          <div key={id} className="flex items-center justify-between bg-slate-900/40 border border-white/5 px-2.5 py-1.5 rounded-xl text-[9.5px]">
-                            <span className="font-mono text-slate-300">Statement #{id}</span>
-                            <button
-                              onClick={() => handleClassificationToggle(id, [opt1, opt2])}
-                              style={{
-                                color: !cur ? "#64748b" : moduleColor,
-                                borderColor: !cur ? "rgba(255,255,255,0.05)" : `${moduleColor}40`,
-                                backgroundColor: !cur ? "transparent" : `${moduleColor}10`,
-                              }}
-                              className="px-3 py-0.5 rounded-lg border font-mono font-bold text-[9px] transition-all min-w-[80px] text-center"
-                            >
-                              {!cur ? "Select" : cur === opt1 ? `${label1} (${opt1})` : `${label2} (${opt2})`}
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {taskDef.id === "task4_2" && (
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-2 gap-2 text-[9.5px] font-mono">
-                        <div className="bg-slate-900/40 border border-white/5 p-2 rounded-xl text-center">
-                          <span className="text-slate-500 block text-[8px] uppercase">Input 1</span>
-                          "Launch the rocket"
-                        </div>
-                        <div className="bg-slate-900/40 border border-emerald-500/20 p-2 rounded-xl text-center">
-                          <span className="text-emerald-400 block text-[8px] uppercase">Input 2 (modified)</span>
-                          "Launch the rocket<span className="text-emerald-400 font-bold">.</span>"
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-[8.5px] font-mono text-slate-400 uppercase tracking-wide block mb-1">Appended character:</label>
-                        <input
-                          type="text" maxLength={1}
-                          value={inputs.char || ""}
-                          onChange={e => handleInputChange("char", e.target.value)}
-                          placeholder="e.g. ."
-                          className="w-full bg-slate-900 border border-white/10 rounded-xl px-2.5 py-1.5 text-[14px] text-white font-mono text-center placeholder-slate-700"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {taskDef.id === "task8_3" && (
-                    <div>
-                      <label className="text-[8.5px] font-mono text-slate-400 uppercase tracking-wide block mb-1">Match sequence (e.g. 1234):</label>
-                      <input
-                        type="text" maxLength={4}
-                        value={inputs.match || ""}
-                        onChange={e => handleInputChange("match", e.target.value)}
-                        placeholder="4-digit code"
-                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-1.5 text-[14px] text-white font-mono tracking-widest text-center placeholder-slate-700"
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* VALIDATOR TERMINAL */}
-              {taskDef.practical.type === "validator-terminal" && (
-                <div className="space-y-3">
-                  {taskDef.id === "task7_4" && (
-                    <div className="space-y-2">
-                      <div className="text-[9px] font-mono text-slate-400 text-center uppercase tracking-wider">
-                        Select transaction ordering outcome:
-                      </div>
-                      <div className="grid grid-cols-2 gap-2.5">
-                        {[
-                          { val: "Alpha:Beta", label: "Accept Alpha, Reject Beta", desc: "Earlier timestamp wins" },
-                          { val: "Beta:Alpha", label: "Accept Beta, Reject Alpha", desc: "Later timestamp wins" },
-                        ].map(opt => (
-                          <button
-                            key={opt.val}
-                            onClick={() => setInputs({ resolution: opt.val })}
-                            className={`p-3 rounded-xl border text-left transition-all ${inputs.resolution === opt.val ? "border-cyan-500/50 bg-cyan-500/10 text-white" : "border-white/5 bg-slate-900/50 text-slate-400 hover:text-slate-200"}`}
-                          >
-                            <span className="font-mono text-[9px] font-bold block mb-1" style={{ color: moduleColor }}>{opt.val}</span>
-                            <span className="text-[9px] block">{opt.label}</span>
-                            <span className="text-[8px] text-slate-500 block mt-0.5">{opt.desc}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {taskDef.id === "task8_4" && (
-                    <div className="space-y-3">
-                      <div className="bg-black/90 border border-white/10 rounded-xl font-mono text-[9px] h-[110px] overflow-hidden p-2.5 space-y-1 text-slate-300">
-                        <div className="text-cyan-400">$ verify</div>
-                        <div className="text-emerald-400">
-                          {inputs.code === "MATRIX_PASS" ? "✓ Decision Matrix Verified — Code: MATRIX_PASS" : "Awaiting verification..."}
-                        </div>
-                      </div>
-                      {inputs.code !== "MATRIX_PASS" && (
-                        <button
-                          onClick={() => setInputs({ code: "MATRIX_PASS" })}
-                          className="w-full bg-cyan-500/10 border border-cyan-500/30 hover:bg-cyan-500/20 text-cyan-400 px-3 py-2 rounded-xl font-mono text-[9px] font-bold cursor-pointer"
-                        >
-                          RUN VERIFY COMMAND
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* GRAPH MATCHER */}
-              {taskDef.practical.type === "graph-matcher" && (
-                <div className="space-y-3">
-                  <div className="text-[9px] font-mono text-slate-400 text-center">
-                    {taskDef.id === "task6_3" ? "Click the node that detects & rejects the invalid tx:" : "Click the mutually trusting core quorum nodes:"}
-                  </div>
-                  <div className="flex justify-center gap-2 flex-wrap">
-                    {[1, 2, 3, 4, 5].map(ni => {
-                      const isSel = selectedNodes.includes(ni);
-                      return (
-                        <button
-                          key={ni}
-                          onClick={() => {
-                            if (taskDef.id === "task6_3") setSelectedNodes([ni]);
-                            else setSelectedNodes(prev => {
-                              const list = prev.includes(ni) ? prev.filter(n => n !== ni) : [...prev, ni];
-                              return list.sort((a, b) => a - b);
-                            });
-                          }}
-                          style={{ borderColor: isSel ? moduleColor : "rgba(255,255,255,0.1)", backgroundColor: isSel ? `${moduleColor}20` : "rgba(15,23,42,0.6)" }}
-                          className="w-12 h-12 rounded-full border font-mono font-bold flex items-center justify-center text-[10px] text-white hover:scale-105 transition-all cursor-pointer"
-                        >
-                          N{ni}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <div className="bg-slate-900/60 p-2 border border-white/5 rounded-xl text-center font-mono text-[9px]">
-                    <span className="text-slate-500 uppercase mr-2">Selection:</span>
-                    <span className="font-bold text-white" style={{ color: moduleColor }}>{selectedNodes.join(",") || "NONE"}</span>
-                  </div>
-                </div>
-              )}
-
-              {/* COMPARISON / BLOCKCHAIN TAMPER */}
-              {taskDef.practical.type === "comparison" && (
-                <div className="space-y-3">
-                  <div className="text-[9.5px] font-mono text-slate-400 text-center">Click Block 2 to tamper and observe cascade:</div>
-                  <div className="flex justify-between items-center gap-1 overflow-x-auto py-1 scrollbar-thin select-none">
-                    {blockchainBlocks.map((block, idx) => (
-                      <motion.div
-                        key={block.id}
-                        animate={block.status === "tampered" ? { scale: [1, 1.05, 1] } : {}}
-                        transition={{ duration: 0.5, repeat: Infinity }}
-                        onClick={() => { if (block.id === 2) toggleBlockchainTamper(idx); }}
-                        className={`flex-1 min-w-[48px] border p-1.5 rounded-xl text-center font-mono transition-all ${
-                          block.status === "valid" ? "bg-slate-900/60 border-white/10 hover:border-cyan-500/40 cursor-pointer"
-                          : block.status === "tampered" ? "bg-rose-950/40 border-rose-500/50 shadow-[0_0_12px_rgba(239,68,68,0.2)] animate-pulse"
-                          : "bg-red-950/20 border-red-500/20 text-slate-500"
-                        }`}
-                      >
-                        <div className="text-[7.5px] text-slate-400">B{block.id}</div>
-                        <div className="text-[8px] font-bold mt-0.5 truncate" style={{ color: block.status === "valid" ? "#22d3ee" : block.status === "tampered" ? "#f43f5e" : "#64748b" }}>
-                          {block.hash}
-                        </div>
-                        <div className="text-[6.5px] text-slate-500 mt-0.5 truncate">▲ {block.prev}</div>
-                      </motion.div>
-                    ))}
-                  </div>
-                  {tamperIndex !== null && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                      className="bg-rose-500/5 border border-rose-500/20 rounded-xl p-2.5 text-[9px] font-mono text-rose-300">
-                      ⚠️ Domino cascade! Block 2 tampered → Blocks 3, 4, 5 hash references broken.
-                    </motion.div>
-                  )}
-                  <div className="flex gap-2">
-                    {["All of them", "Block 2 only"].map(opt => (
-                      <button
-                        key={opt}
-                        onClick={() => setInputs({ blocks: opt })}
-                        className={`flex-1 py-2 rounded-xl text-[10px] font-mono transition-all border cursor-pointer ${
-                          inputs.blocks === opt ? "border-cyan-500/50 bg-cyan-500/10 text-cyan-300" : "bg-slate-900 border-white/10 text-slate-400 hover:text-white"
-                        }`}
-                      >
-                        {opt}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* SERVER AUDIT / MATH CONSOLE */}
-              {(taskDef.practical.type === "server-audit" || taskDef.practical.type === "math-console") && (
-                <div className="text-center py-2">
-                  <Database className="w-8 h-8 mx-auto mb-2" style={{ color: moduleColor, opacity: 0.5 }} />
-                  <div className="text-[10px] text-slate-400 font-mono leading-relaxed px-3">
-                    Scenario data is in the center panel. Calculate and enter your answers below.
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Input fields (only when no MCQ) */}
-            {!hasMCQ && !success && taskDef.practical.type !== "terminal-audit" && (
-              <div className="space-y-3">
-                {taskDef.practical.inputs && taskDef.practical.inputs.length > 0 ? (
-                  <div className="grid gap-2">
-                    {taskDef.practical.inputs.map((inp, idx) => (
-                      <div key={idx} className="space-y-0.5">
-                        <label className="text-[8.5px] font-mono text-slate-400 uppercase tracking-wider block">{inp.label}</label>
-                        <input
-                          type="text"
-                          value={inputs[inp.key] || ""}
-                          onChange={e => handleInputChange(inp.key, e.target.value)}
-                          placeholder={inp.placeholder}
-                          disabled={success}
-                          className="w-full bg-slate-900/90 border border-white/10 rounded-xl px-3 py-1.5 text-[11px] text-white font-mono placeholder-slate-700 focus:outline-hidden focus:border-cyan-500 transition"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  !["drag-drop", "validator-terminal", "graph-matcher", "comparison"].includes(taskDef.practical.type) && (
-                    <div>
-                      <label className="text-[8.5px] font-mono text-slate-400 uppercase tracking-wide block mb-1">Answer</label>
-                      <input
-                        type="text"
-                        value={inputs.seq || ""}
-                        onChange={e => handleInputChange("seq", e.target.value)}
-                        placeholder="Enter answer..."
-                        disabled={success}
-                        className="w-full bg-slate-900/90 border border-white/10 rounded-xl px-3 py-1.5 text-[11px] text-white font-mono placeholder-slate-700 focus:outline-hidden focus:border-cyan-500 transition"
-                      />
-                    </div>
-                  )
-                )}
-
-                {/* Submit button */}
-                <button
-                  onClick={() => {
-                    if (taskDef.practical.type === "graph-matcher") {
-                      if (taskDef.id === "task6_3") inputs.node_idx = selectedNodes.length > 0 ? String(selectedNodes[0]) : "";
-                      else if (taskDef.id === "task7_3") inputs.quorum = selectedNodes.sort((a, b) => a - b).join(",");
-                    }
-                    handleVerify();
-                  }}
-                  style={{ borderColor: `${moduleColor}50`, backgroundColor: `${moduleColor}15` }}
-                  className="w-full border text-white font-bold py-2.5 rounded-2xl text-[10px] font-rushblade tracking-wider flex items-center justify-center gap-1.5 transition hover:opacity-85 cursor-pointer shadow-md"
-                >
-                  Submit & Verify <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-
-                {/* Error + Hints */}
-                <AnimatePresence>
-                  {errorMessage && !success && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="space-y-2 overflow-hidden"
-                    >
-                      <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 flex items-start gap-2 text-[10px] text-rose-400 font-mono">
-                        <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                        <span>{errorMessage}</span>
-                      </div>
-                      <button
-                        onClick={() => { setShowHint(true); setHintStep(p => Math.min(p + 1, correctParts.length)); }}
-                        className="w-full flex items-center justify-between px-3.5 py-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-[10px] text-amber-400 font-mono hover:bg-amber-500/15 transition cursor-pointer"
-                      >
-                        <span className="flex items-center gap-1.5">
-                          <Lightbulb className="w-3.5 h-3.5" />
-                          {showHint ? `Reveal hint (${hintStep}/${correctParts.length})` : "Request a hint?"}
-                        </span>
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </button>
-                      {showHint && hintStep > 0 && (
-                        <div className="bg-amber-950/20 border border-amber-500/20 rounded-xl p-3.5 space-y-2">
-                          <div className="text-[9px] font-mono text-amber-400 uppercase tracking-widest">Revealed Hints</div>
-                          {correctParts.slice(0, hintStep).map((part, idx) => (
-                            <div key={idx} className="flex items-center justify-between text-[10px] font-mono">
-                              <span className="text-amber-500/60 mr-2">{hintLabels[idx] || `Param ${idx + 1}`}:</span>
-                              <span className="text-amber-200 font-bold">{part}</span>
+                              )}
+                              {!["task2_1","task3_1","task3_2","task5_1","task6_2","task8_1"].includes(taskDef.id) && (
+                                <pre className="text-slate-300 leading-relaxed whitespace-pre-wrap">{taskDef.practical.setupText}</pre>
+                              )}
                             </div>
-                          ))}
+                          </div>
+                        )}
+
+                        {/* TERMINAL AUDIT WIDGET */}
+                        {taskDef.practical.type === "terminal-audit" && terminalMission && (
+                          <CosmosTerminal
+                            mission={terminalMission}
+                            accent={moduleColor}
+                            compact
+                            onObjectiveComplete={() => {
+                              setSubmitted(true);
+                              setSuccess(true);
+                              setErrorMessage(null);
+                              setShowHint(false);
+                              saveTaskScore(taskDef.id, 10, 10, true);
+                            }}
+                          />
+                        )}
+
+                        {/* DRAG AND DROP */}
+                        {taskDef.practical.type === "drag-drop" && (
+                          <div className="space-y-3">
+                            {(taskDef.id === "task2_3" || taskDef.id === "task3_4") && (
+                              <div className="space-y-2">
+                                <div className="text-[9px] font-mono text-slate-400 text-center">Click letters to build sequence order:</div>
+                                <div className="flex flex-wrap gap-2 justify-center">
+                                  {getDragLetters().map((letter, idx) => {
+                                    const isSel = selectedSequence.includes(letter);
+                                    const pos = selectedSequence.indexOf(letter);
+                                    return (
+                                      <button
+                                        key={`${letter}-${idx}`}
+                                        onClick={() => handleSeqClick(letter)}
+                                        style={{
+                                          borderColor: isSel ? moduleColor : "rgba(255,255,255,0.1)",
+                                          backgroundColor: isSel ? `${moduleColor}20` : "rgba(15,23,42,0.4)",
+                                        }}
+                                        className="w-10 h-10 rounded-xl border font-mono font-bold flex flex-col items-center justify-center transition-all relative text-xs text-white hover:scale-105"
+                                      >
+                                        {letter}
+                                        {isSel && <span className="absolute top-0.5 right-1 text-[7px] font-bold" style={{ color: moduleColor }}>{pos + 1}</span>}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                                <div className="bg-slate-900/60 p-2 border border-white/5 rounded-xl text-center font-mono text-[10px]">
+                                  <span className="text-slate-500 uppercase mr-2">Sequence:</span>
+                                  <span className="font-bold text-white tracking-widest">{selectedSequence.join("") || "—"}</span>
+                                </div>
+                                {selectedSequence.length > 0 && (
+                                  <button onClick={() => setSelectedSequence([])} className="w-full text-[8.5px] font-mono text-slate-500 hover:text-slate-300 uppercase tracking-widest">
+                                    Reset
+                                  </button>
+                                )}
+                              </div>
+                            )}
+
+                            {(taskDef.id === "task4_3" || taskDef.id === "task7_2") && (
+                              <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1 scrollbar-thin">
+                                <div className="text-[8.5px] font-mono text-slate-400 text-center mb-1">Toggle classification for each statement:</div>
+                                {Array.from({ length: 6 }).map((_, idx) => {
+                                  const id = idx + 1;
+                                  const [opt1, opt2] = taskDef.id === "task4_3" ? ["H", "E"] : ["W", "S"];
+                                  const [label1, label2] = taskDef.id === "task4_3" ? ["Hashing", "Encrypt"] : ["PoW", "PoS"];
+                                  const cur = classifications[id];
+                                  return (
+                                    <div key={id} className="flex items-center justify-between bg-slate-900/40 border border-white/5 px-2.5 py-1.5 rounded-xl text-[9.5px]">
+                                      <span className="font-mono text-slate-300">Statement #{id}</span>
+                                      <button
+                                        onClick={() => handleClassificationToggle(id, [opt1, opt2])}
+                                        style={{
+                                          color: !cur ? "#64748b" : moduleColor,
+                                          borderColor: !cur ? "rgba(255,255,255,0.05)" : `${moduleColor}40`,
+                                          backgroundColor: !cur ? "transparent" : `${moduleColor}10`,
+                                        }}
+                                        className="px-3 py-0.5 rounded-lg border font-mono font-bold text-[9px] transition-all min-w-[80px] text-center"
+                                      >
+                                        {!cur ? "Select" : cur === opt1 ? `${label1} (${opt1})` : `${label2} (${opt2})`}
+                                      </button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+
+                            {taskDef.id === "task4_2" && (
+                              <div className="space-y-3">
+                                <div className="grid grid-cols-2 gap-2 text-[9.5px] font-mono">
+                                  <div className="bg-slate-900/40 border border-white/5 p-2 rounded-xl text-center">
+                                    <span className="text-slate-500 block text-[8px] uppercase">Input 1</span>
+                                    "Launch the rocket"
+                                  </div>
+                                  <div className="bg-slate-900/40 border border-emerald-500/20 p-2 rounded-xl text-center">
+                                    <span className="text-emerald-400 block text-[8px] uppercase">Input 2 (modified)</span>
+                                    "Launch the rocket<span className="text-emerald-400 font-bold">.</span>"
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="text-[8.5px] font-mono text-slate-400 uppercase tracking-wide block mb-1">Appended character:</label>
+                                  <input
+                                    type="text" maxLength={1}
+                                    value={inputs.char || ""}
+                                    onChange={e => handleInputChange("char", e.target.value)}
+                                    placeholder="e.g. ."
+                                    className="w-full bg-slate-900 border border-white/10 rounded-xl px-2.5 py-1.5 text-[14px] text-white font-mono text-center placeholder-slate-700 focus:outline-hidden"
+                                  />
+                                </div>
+                              </div>
+                            )}
+
+                            {taskDef.id === "task8_3" && (
+                              <div>
+                                <label className="text-[8.5px] font-mono text-slate-400 uppercase tracking-wide block mb-1">Match sequence (e.g. 1234):</label>
+                                <input
+                                  type="text" maxLength={4}
+                                  value={inputs.match || ""}
+                                  onChange={e => handleInputChange("match", e.target.value)}
+                                  placeholder="4-digit code"
+                                  className="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-1.5 text-[14px] text-white font-mono tracking-widest text-center placeholder-slate-700 focus:outline-hidden"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* VALIDATOR TERMINAL */}
+                        {taskDef.practical.type === "validator-terminal" && (
+                          <div className="space-y-3">
+                            {taskDef.id === "task7_4" && (
+                              <div className="space-y-2">
+                                <div className="text-[9px] font-mono text-slate-400 text-center uppercase tracking-wider">
+                                  Select transaction ordering outcome:
+                                </div>
+                                <div className="grid grid-cols-2 gap-2.5">
+                                  {[
+                                    { val: "Alpha:Beta", label: "Accept Alpha, Reject Beta", desc: "Earlier timestamp wins" },
+                                    { val: "Beta:Alpha", label: "Accept Beta, Reject Alpha", desc: "Later timestamp wins" },
+                                  ].map(opt => (
+                                    <button
+                                      key={opt.val}
+                                      onClick={() => setInputs({ resolution: opt.val })}
+                                      className={`p-3 rounded-xl border text-left transition-all ${inputs.resolution === opt.val ? "border-cyan-500/50 bg-cyan-500/10 text-white" : "border-white/5 bg-slate-900/50 text-slate-400 hover:text-slate-200"}`}
+                                    >
+                                      <span className="font-mono text-[9px] font-bold block mb-1" style={{ color: moduleColor }}>{opt.val}</span>
+                                      <span className="text-[9px] block">{opt.label}</span>
+                                      <span className="text-[8px] text-slate-500 block mt-0.5">{opt.desc}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {taskDef.id === "task8_4" && (
+                              <div className="space-y-3">
+                                <div className="bg-black/90 border border-white/10 rounded-xl font-mono text-[9px] h-[110px] overflow-hidden p-2.5 space-y-1 text-slate-300">
+                                  <div className="text-cyan-400">$ verify</div>
+                                  <div className="text-emerald-400">
+                                    {inputs.code === "MATRIX_PASS" ? "✓ Decision Matrix Verified — Code: MATRIX_PASS" : "Awaiting verification..."}
+                                  </div>
+                                </div>
+                                {inputs.code !== "MATRIX_PASS" && (
+                                  <button
+                                    onClick={() => setInputs({ code: "MATRIX_PASS" })}
+                                    className="w-full bg-cyan-500/10 border border-cyan-500/30 hover:bg-cyan-500/20 text-cyan-400 px-3 py-2 rounded-xl font-mono text-[9px] font-bold cursor-pointer"
+                                  >
+                                    RUN VERIFY COMMAND
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* GRAPH MATCHER */}
+                        {taskDef.practical.type === "graph-matcher" && (
+                          <div className="space-y-3">
+                            <div className="text-[9px] font-mono text-slate-400 text-center">
+                              {taskDef.id === "task6_3" ? "Click the node that detects & rejects the invalid tx:" : "Click the mutually trusting core quorum nodes:"}
+                            </div>
+                            <div className="flex justify-center gap-2 flex-wrap">
+                              {[1, 2, 3, 4, 5].map(ni => {
+                                const isSel = selectedNodes.includes(ni);
+                                return (
+                                  <button
+                                    key={ni}
+                                    onClick={() => {
+                                      if (taskDef.id === "task6_3") setSelectedNodes([ni]);
+                                      else setSelectedNodes(prev => {
+                                        const list = prev.includes(ni) ? prev.filter(n => n !== ni) : [...prev, ni];
+                                        return list.sort((a, b) => a - b);
+                                      });
+                                    }}
+                                    style={{ borderColor: isSel ? moduleColor : "rgba(255,255,255,0.1)", backgroundColor: isSel ? `${moduleColor}20` : "rgba(15,23,42,0.6)" }}
+                                    className="w-12 h-12 rounded-full border font-mono font-bold flex items-center justify-center text-[10px] text-white hover:scale-105 transition-all cursor-pointer"
+                                  >
+                                    N{ni}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            <div className="bg-slate-900/60 p-2 border border-white/5 rounded-xl text-center font-mono text-[9px]">
+                              <span className="text-slate-500 uppercase mr-2">Selection:</span>
+                              <span className="font-bold text-white" style={{ color: moduleColor }}>{selectedNodes.join(",") || "NONE"}</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* COMPARISON / BLOCKCHAIN TAMPER */}
+                        {taskDef.practical.type === "comparison" && (
+                          <div className="space-y-3">
+                            <div className="text-[9.5px] font-mono text-slate-400 text-center">Click Block 2 to tamper and observe cascade:</div>
+                            <div className="flex justify-between items-center gap-1 overflow-x-auto py-1 scrollbar-thin select-none">
+                              {blockchainBlocks.map((block, idx) => (
+                                <motion.div
+                                  key={block.id}
+                                  animate={block.status === "tampered" ? { scale: [1, 1.05, 1] } : {}}
+                                  transition={{ duration: 0.5, repeat: Infinity }}
+                                  onClick={() => { if (block.id === 2) toggleBlockchainTamper(idx); }}
+                                  className={`flex-1 min-w-[48px] border p-1.5 rounded-xl text-center font-mono transition-all ${
+                                    block.status === "valid" ? "bg-slate-900/60 border-white/10 hover:border-cyan-500/40 cursor-pointer"
+                                    : block.status === "tampered" ? "bg-rose-950/40 border-rose-500/50 shadow-[0_0_12px_rgba(239,68,68,0.2)] animate-pulse"
+                                    : "bg-red-950/20 border-red-500/20 text-slate-500"
+                                  }`}
+                                >
+                                  <div className="text-[7.5px] text-slate-400">B{block.id}</div>
+                                  <div className="text-[8px] font-bold mt-0.5 truncate" style={{ color: block.status === "valid" ? "#22d3ee" : block.status === "tampered" ? "#f43f5e" : "#64748b" }}>
+                                    {block.hash}
+                                  </div>
+                                  <div className="text-[6.5px] text-slate-500 mt-0.5 truncate">▲ {block.prev}</div>
+                                </motion.div>
+                              ))}
+                            </div>
+                            {tamperIndex !== null && (
+                              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                                className="bg-rose-500/5 border border-rose-500/20 rounded-xl p-2.5 text-[9px] font-mono text-rose-300">
+                                ⚠️ Domino cascade! Block 2 tampered → Blocks 3, 4, 5 hash references broken.
+                              </motion.div>
+                            )}
+                            <div className="flex gap-2">
+                              {["All of them", "Block 2 only"].map(opt => (
+                                <button
+                                  key={opt}
+                                  onClick={() => setInputs({ blocks: opt })}
+                                  className={`flex-1 py-2 rounded-xl text-[10px] font-mono transition-all border cursor-pointer ${
+                                    inputs.blocks === opt ? "border-cyan-500/50 bg-cyan-500/10 text-cyan-300" : "bg-slate-900 border-white/10 text-slate-400 hover:text-white"
+                                  }`}
+                                >
+                                  {opt}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* SERVER AUDIT / MATH CONSOLE */}
+                        {(taskDef.practical.type === "server-audit" || taskDef.practical.type === "math-console") && (
+                          <div className="text-center py-2">
+                            <Database className="w-8 h-8 mx-auto mb-2" style={{ color: moduleColor, opacity: 0.5 }} />
+                            <div className="text-[10px] text-slate-400 font-mono leading-relaxed px-3">
+                              Scenario data is in the center panel. Calculate and enter your answers below.
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Inputs & verify button */}
+                      {!success && taskDef.practical.type !== "terminal-audit" && (
+                        <div className="space-y-3">
+                          {taskDef.practical.inputs && taskDef.practical.inputs.length > 0 ? (
+                            <div className="grid gap-2">
+                              {taskDef.practical.inputs.map((inp, idx) => (
+                                <div key={idx} className="space-y-0.5">
+                                  <label className="text-[8.5px] font-mono text-slate-400 uppercase tracking-wider block">{inp.label}</label>
+                                  <input
+                                    type="text"
+                                    value={inputs[inp.key] || ""}
+                                    onChange={e => handleInputChange(inp.key, e.target.value)}
+                                    placeholder={inp.placeholder}
+                                    disabled={success}
+                                    className="w-full bg-slate-900/90 border border-white/10 rounded-xl px-3 py-1.5 text-[11px] text-white font-mono placeholder-slate-700 focus:outline-hidden focus:border-cyan-500 transition"
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            !["drag-drop", "validator-terminal", "graph-matcher", "comparison"].includes(taskDef.practical.type) && (
+                              <div>
+                                <label className="text-[8.5px] font-mono text-slate-400 uppercase tracking-wide block mb-1">Answer</label>
+                                <input
+                                  type="text"
+                                  value={inputs.seq || ""}
+                                  onChange={e => handleInputChange("seq", e.target.value)}
+                                  placeholder="Enter answer..."
+                                  disabled={success}
+                                  className="w-full bg-slate-900/90 border border-white/10 rounded-xl px-3 py-1.5 text-[11px] text-white font-mono placeholder-slate-700 focus:outline-hidden focus:border-cyan-500 transition"
+                                />
+                              </div>
+                            )
+                          )}
+
+                          <button
+                            onClick={() => {
+                              if (taskDef.practical.type === "graph-matcher") {
+                                if (taskDef.id === "task6_3") inputs.node_idx = selectedNodes.length > 0 ? String(selectedNodes[0]) : "";
+                                else if (taskDef.id === "task7_3") inputs.quorum = selectedNodes.sort((a, b) => a - b).join(",");
+                              }
+                              handleVerify();
+                            }}
+                            style={{ borderColor: `${moduleColor}50`, backgroundColor: `${moduleColor}15` }}
+                            className="w-full border text-white font-bold py-2.5 rounded-2xl text-[10px] font-rushblade tracking-wider flex items-center justify-center gap-1.5 transition hover:opacity-85 cursor-pointer shadow-md"
+                          >
+                            Submit & Verify <ChevronRight className="w-3.5 h-3.5" />
+                          </button>
+
+                          <AnimatePresence>
+                            {errorMessage && !success && (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="space-y-2 overflow-hidden"
+                              >
+                                <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 flex items-start gap-2 text-[10px] text-rose-400 font-mono">
+                                  <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                                  <span>{errorMessage}</span>
+                                </div>
+                                <button
+                                  onClick={() => { setShowHint(true); setHintStep(p => Math.min(p + 1, correctParts.length)); }}
+                                  className="w-full flex items-center justify-between px-3.5 py-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-[10px] text-amber-400 font-mono hover:bg-amber-500/15 transition cursor-pointer"
+                                >
+                                  <span className="flex items-center gap-1.5">
+                                    <Lightbulb className="w-3.5 h-3.5" />
+                                    {showHint ? `Reveal hint (${hintStep}/${correctParts.length})` : "Request a hint?"}
+                                  </span>
+                                  <ChevronRight className="w-3.5 h-3.5" />
+                                </button>
+                                {showHint && hintStep > 0 && (
+                                  <div className="bg-amber-950/20 border border-amber-500/20 rounded-xl p-3.5 space-y-2">
+                                    <div className="text-[9px] font-mono text-amber-400 uppercase tracking-widest">Revealed Hints</div>
+                                    {correctParts.slice(0, hintStep).map((part, idx) => (
+                                      <div key={idx} className="flex items-center justify-between text-[10px] font-mono">
+                                        <span className="text-amber-500/60 mr-2">{hintLabels[idx] || `Param ${idx + 1}`}:</span>
+                                        <span className="text-amber-200 font-bold">{part}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </div>
                       )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                    </>)}
+                  </div>
+                </div>
               </div>
-            )}
+            </motion.div>
+          )}
 
-            {/* Success Panel */}
-            <AnimatePresence>
-              {success && (
-                <motion.div
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-3.5 space-y-3"
-                >
-                  <div className="flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 font-bold uppercase tracking-wider">
-                    <Check className="w-4 h-4" />
-                    <span>Checkpoint Verified ✓</span>
-                  </div>
-                  <p className="text-[11px] text-slate-300 leading-relaxed font-sans">{taskDef.practical.debriefText}</p>
-                  <button
-                    onClick={() => { saveTaskScore(taskDef.id, 10, 10, true); onComplete(); }}
-                    className="w-full text-slate-950 font-bold py-2.5 rounded-2xl text-[10px] font-rushblade tracking-wider flex items-center justify-center gap-1.5 transition shadow-lg cursor-pointer"
-                    style={{ backgroundColor: moduleColor }}
-                  >
-                    Lock Checkpoint & Proceed <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
+          {/* STEP 3: COMPLETE */}
+          {step === "complete" && (
+            <motion.div
+              key="complete"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="max-w-xl mx-auto w-full pt-10 text-center space-y-6"
+            >
+              <div
+                className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mx-auto"
+                style={{ boxShadow: "0 0 30px rgba(16,185,129,0.15)" }}
+              >
+                <Check className="w-8 h-8" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="font-rushblade text-xl text-white">Checkpoint Verified!</h3>
+                <p className="text-xs text-slate-400 font-mono">Status: Secure · Checkpoint logged in local storage</p>
+              </div>
 
-            {/* MCQ success proceed */}
-            <AnimatePresence>
-              {hasMCQ && success && (
-                <motion.div
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-3.5 space-y-3"
-                >
-                  <div className="flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 font-bold uppercase tracking-wider">
-                    <Check className="w-4 h-4" />
-                    <span>All Questions Completed ✓</span>
-                  </div>
-                  <p className="text-[10px] text-slate-400 font-mono">{taskDef.practical.debriefText}</p>
-                  <button
-                    onClick={() => { saveTaskScore(taskDef.id, 10, 10, true); onComplete(); }}
-                    className="w-full text-slate-950 font-bold py-2.5 rounded-2xl text-[10px] font-rushblade tracking-wider flex items-center justify-center gap-1.5 transition shadow-lg cursor-pointer"
-                    style={{ backgroundColor: moduleColor }}
-                  >
-                    Lock Checkpoint & Proceed <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-      </div>
+              <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5 text-left max-w-md mx-auto">
+                <div className="text-[8.5px] font-mono text-emerald-400 uppercase tracking-widest font-bold mb-2">Debrief Summary</div>
+                <p className="text-[11px] text-slate-300 leading-relaxed font-sans">{taskDef.practical.debriefText}</p>
+              </div>
+
+              <button
+                onClick={() => { saveTaskScore(taskDef.id, 10, 10, true); onComplete(); }}
+                className="w-full max-w-xs text-slate-950 font-bold py-3 rounded-2xl text-[10px] font-rushblade tracking-wider flex items-center justify-center gap-1.5 transition shadow-lg cursor-pointer mx-auto hover:opacity-90"
+                style={{ backgroundColor: moduleColor }}
+              >
+                Lock Checkpoint & Proceed <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </main>
     </div>
   );
 }

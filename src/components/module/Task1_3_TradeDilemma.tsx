@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, XCircle, ChevronRight, ArrowRight, Trophy, Star, Shield, AlertTriangle, Zap, Lock, Orbit, RotateCcw } from "lucide-react";
 import { saveTaskScore } from "@/lib/module1-store";
@@ -77,43 +77,43 @@ function CentralizedEscrowSVG({ completed, shippingStep }: { completed: boolean;
     <svg viewBox="0 0 320 160" className="w-full h-full" style={{ filter: "drop-shadow(0 0 8px rgba(245,158,11,0.15))" }}>
       {/* Depots */}
       <g transform="translate(40, 80)">
-        <circle r="16" fill="#0f172a" stroke="#06b6d4" strokeWidth="1.5" />
-        <text y="4" textAnchor="middle" fill="#22d3ee" fontSize="8" fontFamily="monospace" fontWeight="bold">ORION</text>
+        <circle r="20" fill="#0f172a" stroke="#06b6d4" strokeWidth="1.5" />
+        <text y="4" textAnchor="middle" fill="#ffffff" fontSize="8" fontFamily="monospace" fontWeight="bold">ORION</text>
       </g>
       <g transform="translate(160, 80)">
-        <circle r="20" fill="#1e150a" stroke="#f59e0b" strokeWidth="1.5" />
-        <text y="3" textAnchor="middle" fill="#f59e0b" fontSize="8" fontFamily="monospace" fontWeight="bold">DEPOT</text>
+        <circle r="22" fill="#1e150a" stroke="#f59e0b" strokeWidth="1.5" />
+        <text y="3" textAnchor="middle" fill="#ffffff" fontSize="8" fontFamily="monospace" fontWeight="bold">DEPOT</text>
       </g>
       <g transform="translate(280, 80)">
-        <circle r="16" fill="#0f172a" stroke="#8b5cf6" strokeWidth="1.5" />
-        <text y="4" textAnchor="middle" fill="#a78bfa" fontSize="8" fontFamily="monospace" fontWeight="bold">VEGA</text>
+        <circle r="20" fill="#0f172a" stroke="#8b5cf6" strokeWidth="1.5" />
+        <text y="4" textAnchor="middle" fill="#ffffff" fontSize="8" fontFamily="monospace" fontWeight="bold">VEGA</text>
       </g>
 
       {/* Cargo lines */}
-      <line x1="56" y1="80" x2="140" y2="80" stroke="rgba(245,158,11,0.25)" strokeWidth="1" />
-      <line x1="180" y1="80" x2="264" y2="80" stroke="rgba(245,158,11,0.25)" strokeWidth="1" />
+      <line x1="62" y1="80" x2="132" y2="80" stroke="rgba(245,158,11,0.25)" strokeWidth="1" />
+      <line x1="184" y1="80" x2="254" y2="80" stroke="rgba(245,158,11,0.25)" strokeWidth="1" />
 
       {/* Animated cargo */}
       {shippingStep === 1 && (
-        <circle r="3" fill="#22d3ee">
-          <animate attributeName="cx" values="56;140" dur="1.5s" repeatCount="indefinite" />
+        <circle r="3" fill="#22d3ee" cy="80">
+          <animate attributeName="cx" values="62;132" dur="1.5s" repeatCount="indefinite" />
         </circle>
       )}
       {shippingStep === 2 && (
         <>
-          <circle r="3" fill="#22d3ee" cx="140" />
-          <circle r="3" fill="#a78bfa">
-            <animate attributeName="cx" values="264;180" dur="1.5s" repeatCount="indefinite" />
+          <circle r="3" fill="#22d3ee" cx="132" cy="80" />
+          <circle r="3" fill="#a78bfa" cy="80">
+            <animate attributeName="cx" values="254;184" dur="1.5s" repeatCount="indefinite" />
           </circle>
         </>
       )}
       {completed && (
         <>
-          <circle r="4" fill="#a78bfa">
-            <animate attributeName="cx" values="140;56" dur="2s" repeatCount="indefinite" />
+          <circle r="4" fill="#a78bfa" cy="80">
+            <animate attributeName="cx" values="132;62" dur="2s" repeatCount="indefinite" />
           </circle>
-          <circle r="4" fill="#22d3ee">
-            <animate attributeName="cx" values="180;264" dur="2s" repeatCount="indefinite" />
+          <circle r="4" fill="#22d3ee" cy="80">
+            <animate attributeName="cx" values="184;254" dur="2s" repeatCount="indefinite" />
           </circle>
         </>
       )}
@@ -129,12 +129,12 @@ function AtomicSwapFlowSVG({ active, completed }: { active: boolean; completed: 
     <svg viewBox="0 0 320 160" className="w-full h-full" style={{ filter: "drop-shadow(0 0 8px rgba(16,185,129,0.15))" }}>
       {/* Depots */}
       <g transform="translate(60, 80)">
-        <circle r="18" fill="#064e3b" stroke="#10b981" strokeWidth="1.5" />
-        <text y="4" textAnchor="middle" fill="#a7f3d0" fontSize="8" fontFamily="monospace" fontWeight="bold">ORION</text>
+        <circle r="20" fill="#064e3b" stroke="#10b981" strokeWidth="1.5" />
+        <text y="4" textAnchor="middle" fill="#ffffff" fontSize="8" fontFamily="monospace" fontWeight="bold">ORION</text>
       </g>
       <g transform="translate(260, 80)">
-        <circle r="18" fill="#064e3b" stroke="#10b981" strokeWidth="1.5" />
-        <text y="4" textAnchor="middle" fill="#a7f3d0" fontSize="8" fontFamily="monospace" fontWeight="bold">VEGA</text>
+        <circle r="20" fill="#064e3b" stroke="#10b981" strokeWidth="1.5" />
+        <text y="4" textAnchor="middle" fill="#ffffff" fontSize="8" fontFamily="monospace" fontWeight="bold">VEGA</text>
       </g>
 
       {/* Orbit pathways */}
@@ -296,10 +296,65 @@ export default function Task1_3_TradeDilemma({ onComplete }: { onComplete: () =>
   };
 
   const isStepUnlocked = (s: Step) => {
-    const idx = STEP_ORDER.indexOf(s);
-    if (idx === 0) return true;
-    return completedSteps.includes(STEP_ORDER[idx - 1]) || STEP_ORDER.indexOf(step) >= idx;
+    return true;
   };
+
+  const currentIdx = STEP_ORDER.indexOf(step);
+
+  useEffect(() => {
+    const notifyState = () => {
+      const urlMapping: Record<Step, string> = {
+        theory: "theory",
+        demo: "trade-sandbox",
+        quiz: "knowledge-check",
+        game: "barter-dilemma-solver",
+        complete: "verification",
+      };
+      
+      window.dispatchEvent(
+        new CustomEvent("cosmos-x-nav-state", {
+          detail: {
+            canGoBack: currentIdx > 0,
+            canGoForward: currentIdx < STEP_ORDER.length - 1 && isStepUnlocked(STEP_ORDER[currentIdx + 1]),
+            currentStep: urlMapping[step],
+          },
+        })
+      );
+    };
+    notifyState();
+
+    const handleBack = () => {
+      if (currentIdx > 0) {
+        setStep(STEP_ORDER[currentIdx - 1]);
+      }
+    };
+    const handleForward = () => {
+      if (currentIdx < STEP_ORDER.length - 1 && isStepUnlocked(STEP_ORDER[currentIdx + 1])) {
+        setStep(STEP_ORDER[currentIdx + 1]);
+      }
+    };
+    const handleReset = () => {
+      setRound1Choice(null);
+      setSelectedDownsides([]);
+      setSelectedWeakness(null);
+      setShowGameFeedback(false);
+      setGameRound(1);
+      setDemoShippingStep(0);
+      setDemoEscrowDone(false);
+      setCompletedSteps([]);
+      setStep("theory");
+    };
+
+    window.addEventListener("cosmos-x-nav-back", handleBack);
+    window.addEventListener("cosmos-x-nav-forward", handleForward);
+    window.addEventListener("cosmos-x-nav-reset", handleReset);
+
+    return () => {
+      window.removeEventListener("cosmos-x-nav-back", handleBack);
+      window.removeEventListener("cosmos-x-nav-forward", handleForward);
+      window.removeEventListener("cosmos-x-nav-reset", handleReset);
+    };
+  }, [step, completedSteps, currentIdx]);
 
   const triggerDirectShip = () => {
     setDemoShippingStep(1);
@@ -415,7 +470,7 @@ export default function Task1_3_TradeDilemma({ onComplete }: { onComplete: () =>
 
           {/* ── STEP 1: THEORY ── */}
           {step === "theory" && (
-            <motion.div key="theory" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-5 max-w-2xl">
+            <motion.div key="theory" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-6 w-full max-w-7xl">
               <div>
                 <p className="font-mono text-[8px] text-cyan-400 uppercase tracking-widest">Section 1: Core Theory</p>
                 <h2 className="text-xl font-bold text-white mt-0.5">The Double-Coincidence of Wants</h2>
@@ -424,139 +479,160 @@ export default function Task1_3_TradeDilemma({ onComplete }: { onComplete: () =>
                 </p>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="rounded-xl border border-rose-500/20 bg-[#0b060f]/60 p-3 space-y-2">
-                  <span className="font-mono text-[8px] text-rose-400 uppercase tracking-wider block">Centralized Escrow Agency Hops</span>
-                  <div className="h-32 flex items-center justify-center">
-                    <CentralizedEscrowSVG completed={false} shippingStep={0} />
+              {/* Two-column layout grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full">
+                
+                {/* Left Column: text cards and buttons */}
+                <div className="lg:col-span-6 space-y-4">
+                  {/* Cards */}
+                  <div className="space-y-3">
+                    {[
+                      { tag: "DEADLOCK", title: "Barter Settlement Lock", text: "Without common currency or enforcement nodes, whoever ships their asset first is exposed to a 100% loss risk if the buyer defaults.", color: "#ef4444", bg: "rgba(239,68,68,0.1)", border: "#ef4444" },
+                      { tag: "ESCROW AGENTS", title: "Centralized Trust Escrow", text: "Escrow brokers take custody of both parties' shipments, verifying inputs. However, they levy fees, slow clearance, and can seize funds.", color: "#f59e0b", bg: "rgba(245,158,11,0.1)", border: "#f59e0b" },
+                      { tag: "SMART ESCROW", title: "Atomic Cryptography", text: "Atomic swaps cryptographically link trade pipelines. The transactions interlock: either both parties clear their swaps simultaneously, or both rollback.", color: "#10b981", bg: "rgba(16,185,129,0.1)", border: "#10b981" }
+                    ].map((card, i) => (
+                      <div key={i} className="rounded-xl border border-white/5 bg-slate-950/60 p-3.5 flex gap-3.5 relative overflow-hidden" style={{ borderLeft: `3px solid ${card.border}` }}>
+                        <div className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center" style={{ color: card.color, backgroundColor: card.bg }}>
+                          <Shield className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <span className="text-[8px] font-mono px-1 py-0.5 rounded" style={{ color: card.color, backgroundColor: card.bg }}>{card.tag}</span>
+                          <h4 className="text-xs font-bold text-white mt-1.5">{card.title}</h4>
+                          <p className="text-[11px] text-slate-300 leading-relaxed mt-1">{card.text}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button onClick={() => goToStep("demo")} className="px-5 py-2.5 bg-cyan-400/20 border border-cyan-400/40 text-cyan-300 hover:bg-cyan-400/30 text-xs font-bold font-mono rounded-xl transition flex items-center gap-1">
+                    Explore Trade Escrows <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                {/* Right Column: Visual simulation viewer stacked vertically */}
+                <div className="lg:col-span-6 space-y-4">
+                  <div className="rounded-xl border border-rose-500/20 bg-[#0b060f]/60 p-4 space-y-3">
+                    <span className="font-mono text-[9px] text-rose-400 uppercase tracking-wider block">Centralized Escrow Agency Hops</span>
+                    <div className="h-40 flex items-center justify-center">
+                      <CentralizedEscrowSVG completed={false} shippingStep={0} />
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-emerald-500/20 bg-[#040e0a]/60 p-4 space-y-3">
+                    <span className="font-mono text-[9px] text-emerald-400 uppercase tracking-wider block">Decentralized Atomic Swap Route</span>
+                    <div className="h-40 flex items-center justify-center">
+                      <AtomicSwapFlowSVG active={false} completed={false} />
+                    </div>
                   </div>
                 </div>
-                <div className="rounded-xl border border-emerald-500/20 bg-[#040e0a]/60 p-3 space-y-2">
-                  <span className="font-mono text-[8px] text-emerald-400 uppercase tracking-wider block">Decentralized Atomic Swap Route</span>
-                  <div className="h-32 flex items-center justify-center">
-                    <AtomicSwapFlowSVG active={false} completed={false} />
-                  </div>
-                </div>
-              </div>
 
-              {/* Cards */}
-              <div className="space-y-3">
-                {[
-                  { tag: "DEADLOCK", title: "Barter Settlement Lock", text: "Without common currency or enforcement nodes, whoever ships their asset first is exposed to a 100% loss risk if the buyer defaults.", color: "#ef4444", bg: "rgba(239,68,68,0.1)", border: "#ef4444" },
-                  { tag: "ESCROW AGENTS", title: "Centralized Trust Escrow", text: "Escrow brokers take custody of both parties' shipments, verifying inputs. However, they levy fees, slow clearance, and can seize funds.", color: "#f59e0b", bg: "rgba(245,158,11,0.1)", border: "#f59e0b" },
-                  { tag: "SMART ESCROW", title: "Atomic Cryptography", text: "Atomic swaps cryptographically link trade pipelines. The transactions interlock: either both parties clear their swaps simultaneously, or both rollback.", color: "#10b981", bg: "rgba(16,185,129,0.1)", border: "#10b981" }
-                ].map((card, i) => (
-                  <div key={i} className="rounded-xl border border-white/5 bg-slate-950/60 p-3.5 flex gap-3.5 relative overflow-hidden" style={{ borderLeft: `3px solid ${card.border}` }}>
-                    <div className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center" style={{ color: card.color, backgroundColor: card.bg }}>
-                      <Shield className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <span className="text-[8px] font-mono px-1 py-0.5 rounded" style={{ color: card.color, backgroundColor: card.bg }}>{card.tag}</span>
-                      <h4 className="text-xs font-bold text-white mt-1.5">{card.title}</h4>
-                      <p className="text-[11px] text-slate-300 leading-relaxed mt-1">{card.text}</p>
-                    </div>
-                  </div>
-                ))}
               </div>
-
-              <button onClick={() => goToStep("demo")} className="px-5 py-2.5 bg-cyan-400/20 border border-cyan-400/40 text-cyan-300 hover:bg-cyan-400/30 text-xs font-bold font-mono rounded-xl transition flex items-center gap-1">
-                Explore Trade Escrows <ChevronRight className="w-3.5 h-3.5" />
-              </button>
             </motion.div>
           )}
 
           {/* ── STEP 2: DEMO ── */}
           {step === "demo" && (
-            <motion.div key="demo" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-5 max-w-2xl">
+            <motion.div key="demo" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-6 w-full max-w-7xl">
               <div>
                 <p className="font-mono text-[8px] text-cyan-400 uppercase tracking-widest">Section 2: Interactive Sandbox</p>
                 <h2 className="text-xl font-bold text-white mt-0.5">Barter Default Simulator</h2>
                 <p className="text-xs text-slate-400 mt-1">Simulate trade. See how Orion gets defaulted in a direct trade compared to a centralized escrow swap.</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                {(["direct", "escrow"] as const).map((m) => (
-                  <button key={m} onClick={() => { setDemoMode(m); resetTradeDemo(); }}
-                    className={`rounded-xl border p-3.5 text-left transition-all ${
-                      demoMode === m
-                        ? m === "direct" ? "border-rose-400/50 bg-rose-500/10" : "border-emerald-400/50 bg-emerald-500/10"
-                        : "border-white/10 hover:bg-white/3"
-                    }`}
-                  >
-                    <span className="text-xl">{m === "direct" ? "🛸" : "🏰"}</span>
-                    <h4 className="text-xs font-bold text-white mt-1">{m === "direct" ? "Direct Cargo Ship (No Escrow)" : "Central Broker Escrow (Centralized)"}</h4>
-                    <p className="text-[10px] text-slate-400 mt-0.5">{m === "direct" ? "Orion ships oxygen first. Since there's no escrow, Vega defaults on payment." : "Central Depot holds both shipments. Reconciles swap only when both arrive."}</p>
-                  </button>
-                ))}
-              </div>
-
-              <div className="rounded-xl border border-white/10 bg-slate-950/80 p-5 flex flex-col items-center justify-center min-h-[180px]">
-                {demoMode === "direct" ? (
-                  <div className="w-full flex flex-col items-center justify-center">
-                    <div className="flex justify-between items-center w-full max-w-[280px] font-mono text-[9px] mb-3">
-                      <span className="text-cyan-400">Orion (Oxygen surplus)</span>
-                      <span className="text-purple-400">Vega (Fuel surplus)</span>
-                    </div>
-                    <div className="w-full h-24 relative overflow-hidden bg-black/40 border border-white/5 rounded-lg flex items-center justify-between px-6">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-[9px] border ${demoShippingStep >= 1 ? "border-rose-500/30 bg-rose-500/10 text-rose-300" : "border-cyan-400 bg-cyan-400/10 text-cyan-300"}`}>
-                        ORION
-                      </div>
-                      {demoShippingStep === 1 && (
-                        <motion.div animate={{ x: [-80, 80] }} transition={{ duration: 1.5, repeat: Infinity }} className="text-xs">
-                          📦 O₂ cargo
-                        </motion.div>
-                      )}
-                      {demoShippingStep === 2 && (
-                        <div className="text-[10px] font-mono text-rose-400 animate-pulse text-center flex-1">
-                          ⚠ Vega received Oxygen, but turned off trade thrusters. Defaulted on Fuel transfer! Orion lost O₂ cargo.
-                        </div>
-                      )}
-                      {demoShippingStep === 0 && (
-                        <div className="text-[10px] text-slate-500 font-mono text-center flex-1">Orion is waiting to ship O₂ first...</div>
-                      )}
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-[9px] border ${demoShippingStep >= 2 ? "border-rose-500 bg-rose-500/20 text-rose-300 shadow-[0_0_12px_rgba(239,68,68,0.3)]" : "border-purple-400 bg-purple-400/10 text-purple-300"}`}>
-                        VEGA
-                      </div>
-                    </div>
+              {/* Two-column layout grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full">
+                
+                {/* Left Column: Toggles, triggers, logs, CTA */}
+                <div className="lg:col-span-5 space-y-4">
+                  {/* Toggle */}
+                  <div className="flex flex-col gap-3">
+                    {(["direct", "escrow"] as const).map((m) => (
+                      <button key={m} onClick={() => { setDemoMode(m); resetTradeDemo(); }}
+                        className={`rounded-xl border p-3.5 text-left transition-all cursor-pointer ${
+                          demoMode === m
+                            ? m === "direct" ? "border-rose-400/50 bg-rose-500/10" : "border-emerald-400/50 bg-emerald-500/10"
+                            : "border-white/10 hover:bg-white/3"
+                        }`}
+                      >
+                        <span className="text-xl">{m === "direct" ? "🛸" : "🏰"}</span>
+                        <h4 className="text-xs font-bold text-white mt-1">{m === "direct" ? "Direct Cargo Ship (No Escrow)" : "Central Broker Escrow (Centralized)"}</h4>
+                        <p className="text-[10px] text-slate-400 mt-0.5">{m === "direct" ? "Orion ships oxygen first. Since there's no escrow, Vega defaults on payment." : "Central Depot holds both shipments. Reconciles swap only when both arrive."}</p>
+                      </button>
+                    ))}
                   </div>
-                ) : (
-                  <CentralizedEscrowSVG completed={demoEscrowDone} shippingStep={demoShippingStep} />
-                )}
 
-                <div className={`w-full mt-4 rounded-xl p-3 text-[11px] font-mono border ${
-                  demoShippingStep === 2 && demoMode === "direct"
-                    ? "bg-rose-500/10 border-rose-500/20 text-rose-200"
-                    : demoEscrowDone
-                    ? "bg-emerald-500/10 border-emerald-400/20 text-emerald-200"
-                    : "bg-white/5 border-white/5 text-slate-400"
-                }`}>
-                  {demoMode === "direct" ? (
-                    demoShippingStep === 2
-                      ? "⚠ Cargo Default: Vega kept the oxygen cargo but never returned fuel cargo. Orion has zero fallback leverage."
-                      : "Direct cargo transfers rely on blind trust. Click 'Ship First' to trigger trade:"
-                  ) : (
-                    demoEscrowDone
-                      ? "✓ Escrow cleared: Depot received both Oxygen and Fuel, completed exchange, and charged 50 units service fee."
-                      : "Central escrows verify compliance. Click 'Use Escrow clearing' to initiate trust exchange:"
+                  {/* Status update log */}
+                  <div className={`rounded-xl p-3 text-[11px] font-mono border ${
+                    demoShippingStep === 2 && demoMode === "direct"
+                      ? "bg-rose-500/10 border-rose-500/20 text-rose-200"
+                      : demoEscrowDone
+                      ? "bg-emerald-500/10 border-emerald-400/20 text-emerald-200"
+                      : "bg-white/5 border-white/5 text-slate-400"
+                  }`}>
+                    {demoMode === "direct" ? (
+                      demoShippingStep === 2
+                        ? "⚠ Cargo Default: Vega kept the oxygen cargo but never returned fuel cargo. Orion has zero fallback leverage."
+                        : "Direct cargo transfers rely on blind trust. Click 'Ship First' to trigger trade:"
+                    ) : (
+                      demoEscrowDone
+                        ? "✓ Escrow cleared: Depot received both Oxygen and Fuel, completed exchange, and charged 50 units service fee."
+                        : "Central escrows verify compliance. Click 'Use Escrow clearing' to initiate trust exchange:"
+                    )}
+                  </div>
+
+                  {/* Trigger buttons */}
+                  <div className="flex gap-2">
+                    <button onClick={demoMode === "direct" ? triggerDirectShip : triggerEscrowShip} disabled={demoShippingStep > 0}
+                      className="flex-1 py-2.5 bg-cyan-400 text-slate-950 font-bold text-xs rounded-xl hover:bg-cyan-300 transition disabled:opacity-50 cursor-pointer">
+                      {demoMode === "direct" ? "Ship First (Direct)" : "Ship cargo to Depot (Escrow)"}
+                    </button>
+                    <button onClick={resetTradeDemo} className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-xs font-mono cursor-pointer">
+                      Reset
+                    </button>
+                  </div>
+
+                  {(demoShippingStep === 2 || demoEscrowDone) && (
+                    <button onClick={() => goToStep("quiz")} className="w-full py-2.5 bg-cyan-400 text-slate-950 font-bold text-xs rounded-xl hover:bg-cyan-300 transition flex items-center justify-center gap-1 shadow-[0_0_15px_rgba(34,211,238,0.25)] cursor-pointer">
+                      Take the Quiz <ChevronRight className="w-4 h-4" />
+                    </button>
                   )}
                 </div>
-              </div>
 
-              <div className="flex gap-2">
-                <button onClick={demoMode === "direct" ? triggerDirectShip : triggerEscrowShip} disabled={demoShippingStep > 0}
-                  className="flex-1 py-2.5 bg-cyan-400 text-slate-950 font-bold text-xs rounded-xl hover:bg-cyan-300 transition disabled:opacity-50">
-                  {demoMode === "direct" ? "Ship First (Direct)" : "Ship cargo to Depot (Escrow)"}
-                </button>
-                <button onClick={resetTradeDemo} className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-xs font-mono">
-                  Reset
-                </button>
-              </div>
+                {/* Right Column: Visual simulation viewer panel */}
+                <div className="lg:col-span-7 rounded-xl border border-white/10 bg-slate-950/80 p-5 flex flex-col items-center justify-center min-h-[220px] self-stretch">
+                  {demoMode === "direct" ? (
+                    <div className="w-full flex flex-col items-center justify-center">
+                      <div className="flex justify-between items-center w-full max-w-[280px] font-mono text-[9px] mb-3">
+                        <span className="text-cyan-400">Orion (Oxygen surplus)</span>
+                        <span className="text-purple-400">Vega (Fuel surplus)</span>
+                      </div>
+                      <div className="w-full h-24 relative overflow-hidden bg-black/40 border border-white/5 rounded-lg flex items-center justify-between px-6">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-[9px] border ${demoShippingStep >= 1 ? "border-rose-500/30 bg-rose-500/10 text-rose-300" : "border-cyan-400 bg-cyan-400/10 text-cyan-300"}`}>
+                          ORION
+                        </div>
+                        {demoShippingStep === 1 && (
+                          <motion.div animate={{ x: [-80, 80] }} transition={{ duration: 1.5, repeat: Infinity }} className="text-xs">
+                            📦 O₂ cargo
+                          </motion.div>
+                        )}
+                        {demoShippingStep === 2 && (
+                          <div className="text-[10px] font-mono text-rose-400 animate-pulse text-center flex-1">
+                            ⚠ Vega received Oxygen, but turned off trade thrusters. Defaulted on Fuel transfer! Orion lost O₂ cargo.
+                          </div>
+                        )}
+                        {demoShippingStep === 0 && (
+                          <div className="text-[10px] text-slate-500 font-mono text-center flex-1">Orion is waiting to ship O₂ first...</div>
+                        )}
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-[9px] border ${demoShippingStep >= 2 ? "border-rose-500 bg-rose-500/20 text-rose-300 shadow-[0_0_12px_rgba(239,68,68,0.3)]" : "border-purple-400 bg-purple-400/10 text-purple-300"}`}>
+                          VEGA
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <CentralizedEscrowSVG completed={demoEscrowDone} shippingStep={demoShippingStep} />
+                  )}
+                </div>
 
-              {(demoShippingStep === 2 || demoEscrowDone) && (
-                <button onClick={() => goToStep("quiz")} className="w-full py-2.5 bg-cyan-400 text-slate-950 font-bold text-xs rounded-xl hover:bg-cyan-300 transition flex items-center justify-center gap-1 shadow-[0_0_15px_rgba(34,211,238,0.25)]">
-                  Take the Quiz <ChevronRight className="w-4 h-4" />
-                </button>
-              )}
+              </div>
             </motion.div>
           )}
 

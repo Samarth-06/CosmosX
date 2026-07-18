@@ -848,10 +848,62 @@ export default function MercuryChapterOne({ onComplete }: { onComplete: () => vo
   };
 
   const isStepUnlocked = (s: Step) => {
-    const idx = STEP_ORDER.indexOf(s);
-    if (idx === 0) return true;
-    return completedSteps.includes(STEP_ORDER[idx - 1] as Step) || STEP_ORDER.indexOf(step) >= idx;
+    return true;
   };
+
+  const currentIdx = STEP_ORDER.indexOf(step);
+
+  useEffect(() => {
+    const notifyState = () => {
+      const urlMapping: Record<Step, string> = {
+        landing: "briefing",
+        theory: "core-theory",
+        demo: "live-demo",
+        quiz: "knowledge-check",
+        game: "attack-simulator",
+        complete: "verification",
+      };
+      
+      window.dispatchEvent(
+        new CustomEvent("cosmos-x-nav-state", {
+          detail: {
+            canGoBack: currentIdx > 0,
+            canGoForward: currentIdx < STEP_ORDER.length - 1 && isStepUnlocked(STEP_ORDER[currentIdx + 1]),
+            currentStep: urlMapping[step],
+          },
+        })
+      );
+    };
+    notifyState();
+
+    const handleBack = () => {
+      if (currentIdx > 0) {
+        setStep(STEP_ORDER[currentIdx - 1]);
+      }
+    };
+    const handleForward = () => {
+      if (currentIdx < STEP_ORDER.length - 1 && isStepUnlocked(STEP_ORDER[currentIdx + 1])) {
+        setStep(STEP_ORDER[currentIdx + 1]);
+      }
+    };
+    const handleReset = () => {
+      setDemoAttacked(false);
+      setDemoNodeDown(null);
+      setDemoMode("centralized");
+      setCompletedSteps([]);
+      setStep("landing");
+    };
+
+    window.addEventListener("cosmos-x-nav-back", handleBack);
+    window.addEventListener("cosmos-x-nav-forward", handleForward);
+    window.addEventListener("cosmos-x-nav-reset", handleReset);
+
+    return () => {
+      window.removeEventListener("cosmos-x-nav-back", handleBack);
+      window.removeEventListener("cosmos-x-nav-forward", handleForward);
+      window.removeEventListener("cosmos-x-nav-reset", handleReset);
+    };
+  }, [step, completedSteps, currentIdx]);
 
   const currentHint = SIDEBAR_TASKS.find((t) => t.id === step)?.hint ?? "Select a step to begin your mission.";
 
@@ -1036,7 +1088,7 @@ export default function MercuryChapterOne({ onComplete }: { onComplete: () => vo
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
-                className="p-6 md:p-8 space-y-6"
+                className="p-6 md:p-8 space-y-6 w-full max-w-7xl"
               >
                 <div>
                   <p className="font-mono text-[9px] text-cyan-400 uppercase tracking-[0.3em] mb-1">Core Theory</p>
@@ -1044,92 +1096,100 @@ export default function MercuryChapterOne({ onComplete }: { onComplete: () => vo
                   <p className="text-sm text-slate-400 mt-1 max-w-xl">Compare what happens when the two architectures face the same threat.</p>
                 </div>
 
-                {/* Side-by-side SVGs */}
-                <div className="grid md:grid-cols-2 gap-4">
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="rounded-2xl border border-rose-400/25 bg-[#0a0610]/80 p-4 space-y-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-                      <p className="font-mono text-[9px] text-rose-400 uppercase tracking-wider">Centralized — After Attack</p>
+                {/* Two-column layout grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full">
+                  
+                  {/* Left Column: text cards, glossary and buttons */}
+                  <div className="lg:col-span-6 space-y-4">
+                    {/* Theory cards */}
+                    <div className="space-y-3">
+                      {THEORY_CARDS.map((card, i) => (
+                        <motion.div
+                          key={i}
+                          initial={{ opacity: 0, x: -16 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.1 + i * 0.1 }}
+                          className="rounded-xl border border-white/10 bg-slate-950/60 p-4 flex gap-4 relative overflow-hidden"
+                          style={{ borderLeftColor: card.border, borderLeftWidth: "3px" }}
+                        >
+                          <div className="absolute top-0 left-0 w-full h-full opacity-50"
+                            style={{ background: `linear-gradient(135deg, ${card.color}06 0%, transparent 60%)` }}
+                          />
+                          <div className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center relative z-10"
+                            style={{ color: card.color, backgroundColor: card.bg }}>
+                            {card.icon}
+                          </div>
+                          <div className="relative z-10 flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="text-sm font-bold" style={{ color: card.color }}>{card.title}</h4>
+                              <span className="px-1.5 py-0.5 rounded font-mono text-[7px] uppercase tracking-wider"
+                                style={{ color: card.color, backgroundColor: `${card.color}15`, border: `1px solid ${card.color}30` }}>
+                                {card.tag}
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-300 leading-relaxed">{card.text}</p>
+                          </div>
+                        </motion.div>
+                      ))}
                     </div>
-                    <div className="aspect-video">
-                      <CentralizedCollapseGraphic attacked={true} />
-                    </div>
-                    <p className="text-[10px] text-rose-300/70 font-mono text-center">All 6 client nodes lose access instantly</p>
-                  </motion.div>
 
-                  <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.15 }}
-                    className="rounded-2xl border border-emerald-400/25 bg-[#040e0a]/80 p-4 space-y-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                      <p className="font-mono text-[9px] text-emerald-400 uppercase tracking-wider">Distributed — 1 Down, 6 Alive</p>
-                    </div>
-                    <div className="aspect-video">
-                      <DistributedMeshGraphic nodeDown={2} />
-                    </div>
-                    <p className="text-[10px] text-emerald-300/70 font-mono text-center">Network operates at 86% capacity</p>
-                  </motion.div>
-                </div>
-
-                {/* Theory cards */}
-                <div className="space-y-3">
-                  {THEORY_CARDS.map((card, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, x: -16 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.1 + i * 0.1 }}
-                      className="rounded-xl border border-white/10 bg-slate-950/60 p-4 flex gap-4 relative overflow-hidden"
-                      style={{ borderLeftColor: card.border, borderLeftWidth: "3px" }}
-                    >
-                      <div className="absolute top-0 left-0 w-full h-full opacity-50"
-                        style={{ background: `linear-gradient(135deg, ${card.color}06 0%, transparent 60%)` }}
-                      />
-                      <div className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center relative z-10"
-                        style={{ color: card.color, backgroundColor: card.bg }}>
-                        {card.icon}
-                      </div>
-                      <div className="relative z-10 flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="text-sm font-bold" style={{ color: card.color }}>{card.title}</h4>
-                          <span className="px-1.5 py-0.5 rounded font-mono text-[7px] uppercase tracking-wider"
-                            style={{ color: card.color, backgroundColor: `${card.color}15`, border: `1px solid ${card.color}30` }}>
-                            {card.tag}
+                    {/* Glossary pills */}
+                    <div className="rounded-xl border border-white/8 bg-slate-950/40 p-4">
+                      <p className="font-mono text-[8px] text-slate-500 uppercase tracking-widest mb-3">Key Terms Glossary</p>
+                      <div className="flex flex-wrap gap-2">
+                        {GLOSSARY_TERMS.map((kt) => (
+                          <span key={kt.term}
+                            className="px-3 py-1.5 rounded-full text-[10px] font-mono border cursor-default hover:scale-105 transition-transform"
+                            style={{ borderColor: `${kt.color}40`, color: kt.color, backgroundColor: `${kt.color}10` }}
+                          >
+                            {kt.term}
                           </span>
-                        </div>
-                        <p className="text-xs text-slate-300 leading-relaxed">{card.text}</p>
+                        ))}
                       </div>
-                    </motion.div>
-                  ))}
-                </div>
+                    </div>
 
-                {/* Glossary pills */}
-                <div className="rounded-xl border border-white/8 bg-slate-950/40 p-4">
-                  <p className="font-mono text-[8px] text-slate-500 uppercase tracking-widest mb-3">Key Terms Glossary</p>
-                  <div className="flex flex-wrap gap-2">
-                    {GLOSSARY_TERMS.map((kt) => (
-                      <span key={kt.term}
-                        className="px-3 py-1.5 rounded-full text-[10px] font-mono border cursor-default hover:scale-105 transition-transform"
-                        style={{ borderColor: `${kt.color}40`, color: kt.color, backgroundColor: `${kt.color}10` }}
-                      >
-                        {kt.term}
-                      </span>
-                    ))}
+                    <button onClick={() => goToStep("demo")}
+                      className="flex items-center gap-2 px-6 py-3 bg-cyan-400/15 border border-cyan-400/35 text-cyan-300 hover:bg-cyan-400/25 hover:border-cyan-400/60 font-bold text-sm rounded-xl transition-all cursor-pointer">
+                      I understand — Try the Live Demo <ChevronRight className="w-4 h-4" />
+                    </button>
                   </div>
-                </div>
 
-                <button onClick={() => goToStep("demo")}
-                  className="flex items-center gap-2 px-6 py-3 bg-cyan-400/15 border border-cyan-400/35 text-cyan-300 hover:bg-cyan-400/25 hover:border-cyan-400/60 font-bold text-sm rounded-xl transition-all">
-                  I understand — Try the Live Demo <ChevronRight className="w-4 h-4" />
-                </button>
+                  {/* Right Column: Visual simulation viewer stacked vertically */}
+                  <div className="lg:col-span-6 space-y-4">
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.1 }}
+                      className="rounded-2xl border border-rose-400/25 bg-[#0a0610]/80 p-4 space-y-2"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                        <p className="font-mono text-[9px] text-rose-400 uppercase tracking-wider">Centralized — After Attack</p>
+                      </div>
+                      <div className="aspect-video flex items-center justify-center">
+                        <CentralizedCollapseGraphic attacked={true} />
+                      </div>
+                      <p className="text-[10px] text-rose-300/70 font-mono text-center">All 6 client nodes lose access instantly</p>
+                    </motion.div>
+
+                    <motion.div
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.15 }}
+                      className="rounded-2xl border border-emerald-400/25 bg-[#040e0a]/80 p-4 space-y-2"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <p className="font-mono text-[9px] text-emerald-400 uppercase tracking-wider">Distributed — 1 Down, 6 Alive</p>
+                      </div>
+                      <div className="aspect-video flex items-center justify-center">
+                        <DistributedMeshGraphic nodeDown={2} />
+                      </div>
+                      <p className="text-[10px] text-emerald-300/70 font-mono text-center">Network operates at 86% capacity</p>
+                    </motion.div>
+                  </div>
+
+                </div>
               </motion.div>
             )}
 
@@ -1141,7 +1201,7 @@ export default function MercuryChapterOne({ onComplete }: { onComplete: () => vo
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
-                className="p-6 md:p-8 space-y-5"
+                className="p-6 md:p-8 space-y-6 w-full max-w-7xl"
               >
                 <div>
                   <p className="font-mono text-[9px] text-purple-400 uppercase tracking-[0.3em] mb-1">Interactive Demo</p>
@@ -1149,103 +1209,113 @@ export default function MercuryChapterOne({ onComplete }: { onComplete: () => vo
                   <p className="text-sm text-slate-400 mt-1">Choose a network topology, then simulate an attack. See the difference live.</p>
                 </div>
 
-                {/* Toggle */}
-                <div className="grid grid-cols-2 gap-3">
-                  {(["centralized", "distributed"] as const).map((m) => (
-                    <button key={m}
-                      onClick={() => { setDemoMode(m); setDemoAttacked(false); setDemoNodeDown(null); }}
-                      className={`rounded-2xl border p-4 text-left transition-all ${
-                        demoMode === m
-                          ? m === "centralized"
-                            ? "border-rose-400/60 bg-rose-500/10 shadow-[0_0_20px_rgba(239,68,68,0.12)]"
-                            : "border-emerald-400/60 bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.12)]"
-                          : "border-white/10 hover:border-white/20 hover:bg-white/3"
-                      }`}
-                    >
-                      <div className={`text-2xl mb-2 ${m === "centralized" ? "text-rose-400" : "text-emerald-400"}`}>
-                        {m === "centralized" ? "🖥️" : "🌐"}
-                      </div>
-                      <h4 className="text-sm font-bold text-white">{m === "centralized" ? "Central Command" : "Distributed Ledger"}</h4>
-                      <p className="text-xs text-slate-400 mt-1">{m === "centralized" ? "One owner. One source. One failure point." : "Independent peers can compare copies."}</p>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Animated graphic */}
-                <div className="rounded-2xl border border-white/10 bg-slate-950/80 p-5">
-                  <div className="h-56 flex items-center justify-center">
-                    {demoMode === "centralized" ? (
-                      <CentralizedCollapseGraphic attacked={demoAttacked} />
-                    ) : (
-                      <DistributedMeshGraphic nodeDown={demoNodeDown} />
-                    )}
-                  </div>
-
-                  <motion.div
-                    key={`${demoAttacked}-${demoNodeDown}-${demoMode}`}
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`mt-4 rounded-xl p-3 text-xs font-mono transition-all ${
-                      demoAttacked || demoNodeDown !== null
-                        ? demoMode === "centralized"
-                          ? "bg-rose-500/10 border border-rose-400/20 text-rose-200"
-                          : "bg-emerald-500/10 border border-emerald-400/20 text-emerald-200"
-                        : "bg-white/5 border border-white/5 text-slate-500"
-                    }`}
-                  >
-                    {demoAttacked || demoNodeDown !== null
-                      ? demoMode === "centralized"
-                        ? "⚠ Central server offline. All 6 client nodes lost access instantly. The entire network is dark."
-                        : `⚡ Node N${(demoNodeDown ?? 0) + 1} went offline. The remaining ${7 - 1} peers preserve the record. Network operating at 86% capacity.`
-                      : "Click 'Simulate Outage' to see what happens when the system is challenged."}
-                  </motion.div>
-                </div>
-
-                {/* Distributed node pickers */}
-                {demoMode === "distributed" && !demoNodeDown && (
-                  <div className="space-y-2">
-                    <p className="text-xs text-slate-500 font-mono text-center">Or click a node to simulate it going offline:</p>
-                    <div className="flex flex-wrap justify-center gap-2">
-                      {Array.from({ length: 7 }, (_, i) => (
-                        <button key={i} onClick={() => setDemoNodeDown(i)}
-                          className="w-10 h-10 rounded-xl border border-emerald-400/30 bg-emerald-400/5 text-emerald-300 font-mono text-xs hover:border-rose-400/50 hover:bg-rose-500/10 hover:text-rose-300 transition">
-                          N{i + 1}
+                {/* Two-column layout grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full">
+                  
+                  {/* Left Column: Selectors, trigger buttons, logs, CTA */}
+                  <div className="lg:col-span-5 space-y-4">
+                    {/* Toggle */}
+                    <div className="flex flex-col gap-3">
+                      {(["centralized", "distributed"] as const).map((m) => (
+                        <button key={m}
+                          onClick={() => { setDemoMode(m); setDemoAttacked(false); setDemoNodeDown(null); }}
+                          className={`rounded-2xl border p-4 text-left transition-all cursor-pointer ${
+                            demoMode === m
+                              ? m === "centralized"
+                                ? "border-rose-400/60 bg-rose-500/10 shadow-[0_0_20px_rgba(239,68,68,0.12)]"
+                                : "border-emerald-400/60 bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.12)]"
+                              : "border-white/10 hover:border-white/20 hover:bg-white/3"
+                          }`}
+                        >
+                          <div className={`text-2xl mb-2 ${m === "centralized" ? "text-rose-400" : "text-emerald-400"}`}>
+                            {m === "centralized" ? "🖥️" : "🌐"}
+                          </div>
+                          <h4 className="text-sm font-bold text-white">{m === "centralized" ? "Central Command" : "Distributed Ledger"}</h4>
+                          <p className="text-xs text-slate-400 mt-1">{m === "centralized" ? "One owner. One source. One failure point." : "Independent peers can compare copies."}</p>
                         </button>
                       ))}
                     </div>
-                  </div>
-                )}
 
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => {
-                      if (demoMode === "centralized") setDemoAttacked(true);
-                      else setDemoNodeDown(Math.floor(Math.random() * 7));
-                    }}
-                    className={`flex-1 py-3 rounded-xl font-mono text-xs font-bold uppercase tracking-widest transition-all border ${
-                      demoMode === "centralized"
-                        ? "bg-rose-500/20 border-rose-400/50 text-rose-300 hover:bg-rose-500/30 hover:shadow-[0_0_16px_rgba(239,68,68,0.2)]"
-                        : "bg-amber-500/20 border-amber-400/50 text-amber-300 hover:bg-amber-500/30"
-                    }`}
-                  >
-                    ⚡ Simulate Outage
-                  </button>
-                  <button onClick={() => { setDemoAttacked(false); setDemoNodeDown(null); }}
-                    className="px-4 py-3 rounded-xl border border-white/10 text-slate-400 hover:bg-white/5 text-xs font-mono transition">
-                    <RotateCcw className="w-4 h-4" />
-                  </button>
+                    {/* Node trigger action buttons */}
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => {
+                          if (demoMode === "centralized") setDemoAttacked(true);
+                          else setDemoNodeDown(Math.floor(Math.random() * 7));
+                        }}
+                        className={`flex-1 py-3 rounded-xl font-mono text-xs font-bold uppercase tracking-widest transition-all border cursor-pointer ${
+                          demoMode === "centralized"
+                            ? "bg-rose-500/20 border-rose-400/50 text-rose-300 hover:bg-rose-500/30 hover:shadow-[0_0_16px_rgba(239,68,68,0.2)]"
+                            : "bg-amber-500/20 border-amber-400/50 text-amber-300 hover:bg-amber-500/30"
+                        }`}
+                      >
+                        ⚡ Simulate Outage
+                      </button>
+                      <button onClick={() => { setDemoAttacked(false); setDemoNodeDown(null); }}
+                        className="px-4 py-3 rounded-xl border border-white/10 text-slate-400 hover:bg-white/5 text-xs font-mono transition cursor-pointer">
+                        <RotateCcw className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Distributed node pickers */}
+                    {demoMode === "distributed" && !demoNodeDown && (
+                      <div className="space-y-2">
+                        <p className="text-xs text-slate-500 font-mono text-center">Or click a node to simulate it going offline:</p>
+                        <div className="flex flex-wrap justify-center gap-2">
+                          {Array.from({ length: 7 }, (_, i) => (
+                            <button key={i} onClick={() => setDemoNodeDown(i)}
+                              className="w-10 h-10 rounded-xl border border-emerald-400/30 bg-emerald-400/5 text-emerald-300 font-mono text-xs hover:border-rose-400/50 hover:bg-rose-500/10 hover:text-rose-300 transition cursor-pointer">
+                              N{i + 1}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {(demoAttacked || demoNodeDown !== null) && (
+                      <motion.button
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        onClick={() => goToStep("quiz")}
+                        className="w-full py-3 bg-cyan-400 text-slate-950 font-bold text-sm rounded-xl hover:bg-cyan-300 transition-all shadow-[0_0_24px_rgba(34,211,238,0.3)] hover:scale-[1.01] flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        I've seen enough — Take the Quiz <ChevronRight className="w-4 h-4" />
+                      </motion.button>
+                    )}
+                  </div>
+
+                  {/* Right Column: Visual simulation viewer */}
+                  <div className="lg:col-span-7 rounded-2xl border border-white/10 bg-slate-950/80 p-5 self-stretch flex flex-col justify-between">
+                    <div className="h-56 flex items-center justify-center">
+                      {demoMode === "centralized" ? (
+                        <CentralizedCollapseGraphic attacked={demoAttacked} />
+                      ) : (
+                        <DistributedMeshGraphic nodeDown={demoNodeDown} />
+                      )}
+                    </div>
+
+                    <motion.div
+                      key={`${demoAttacked}-${demoNodeDown}-${demoMode}`}
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`mt-4 rounded-xl p-3 text-xs font-mono transition-all ${
+                        demoAttacked || demoNodeDown !== null
+                          ? demoMode === "centralized"
+                            ? "bg-rose-500/10 border border-rose-400/20 text-rose-200"
+                            : "bg-emerald-500/10 border border-emerald-400/20 text-emerald-200"
+                          : "bg-white/5 border border-white/5 text-slate-500"
+                      }`}
+                    >
+                      {demoAttacked || demoNodeDown !== null
+                        ? demoMode === "centralized"
+                          ? "⚠ Central server offline. All 6 client nodes lost access instantly. The entire network is dark."
+                          : `⚡ Node N${(demoNodeDown ?? 0) + 1} went offline. The remaining ${7 - 1} peers preserve the record. Network operating at 86% capacity.`
+                        : "Click 'Simulate Outage' to see what happens when the system is challenged."}
+                    </motion.div>
+                  </div>
+
                 </div>
 
-                {(demoAttacked || demoNodeDown !== null) && (
-                  <motion.button
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    onClick={() => goToStep("quiz")}
-                    className="w-full py-3 bg-cyan-400 text-slate-950 font-bold text-sm rounded-xl hover:bg-cyan-300 transition-all shadow-[0_0_24px_rgba(34,211,238,0.3)] hover:scale-[1.01] flex items-center justify-center gap-2"
-                  >
-                    I've seen enough — Take the Quiz <ChevronRight className="w-4 h-4" />
-                  </motion.button>
-                )}
               </motion.div>
             )}
 
@@ -1402,7 +1472,7 @@ export default function MercuryChapterOne({ onComplete }: { onComplete: () => vo
                       initial={{ width: 0 }}
                       animate={{ width: "12.5%" }}
                       transition={{ delay: 1.1, duration: 0.8, ease: "easeOut" }}
-                      className="h-full bg-gradient-to-r from-cyan-500 to-cyan-300 rounded-full shadow-[0_0_6px_rgba(34,211,238,0.5)]"
+                      className="h-full bg-linear-to-r from-cyan-500 to-cyan-300 rounded-full shadow-[0_0_6px_rgba(34,211,238,0.5)]"
                     />
                   </div>
                 </motion.div>

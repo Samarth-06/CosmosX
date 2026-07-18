@@ -41,6 +41,10 @@ import {
   setMercuryCurrentTask,
   resetMercuryProgress,
   getVerifiedModules,
+  resetModuleProgress,
+  getTaskScores,
+  getEarnedBadges,
+  MODULE_BADGES,
 } from "@/lib/module1-store";
 import ModuleVerificationScreen from "@/components/module/ModuleVerificationScreen";
 import ModuleIntroCard from "@/components/module/ModuleIntroCard";
@@ -203,24 +207,24 @@ const getLabelStyles = (angle: number, isSelected: boolean) => {
   if (angle === -90) {
     return {
       className: "absolute bottom-full left-1/2 flex flex-col items-center text-center pb-2 w-44",
-      animate: { y: isSelected ? -40 : 0, x: "-50%" }
+      animate: { y: isSelected ? -12 : 0, x: "-50%" }
     };
   }
   if (angle === 90) {
     return {
       className: "absolute top-full left-1/2 flex flex-col items-center text-center pt-2 w-44",
-      animate: { y: isSelected ? 40 : 0, x: "-50%" }
+      animate: { y: isSelected ? 12 : 0, x: "-50%" }
     };
   }
   if (angle === -45 || angle === 0 || angle === 45) {
     return {
       className: "absolute left-full top-1/2 flex flex-col items-start text-left pl-3.5 w-44",
-      animate: { x: isSelected ? 40 : 0, y: "-50%" }
+      animate: { x: isSelected ? 12 : 0, y: "-50%" }
     };
   }
   return {
     className: "absolute right-full top-1/2 flex flex-col items-end text-right pr-3.5 w-44",
-    animate: { x: isSelected ? -40 : 0, y: "-50%" }
+    animate: { x: isSelected ? -12 : 0, y: "-50%" }
   };
 };
 
@@ -352,10 +356,13 @@ function renderModuleIcon(type: string, isUnlocked: boolean, color: string, clas
 const MODULES = MERCURY_EXPEDITION_MODULES.map(m => ({
   id: m.id,
   num: String(m.id).padStart(2, "0"),
-  title: m.topic,
+  title: m.title,
+  topic: m.topic,
   stageName: m.stageName,
   iconName: m.iconName,
   color: m.color,
+  angle: m.angle,
+  description: m.description,
   verifyId: `task${m.id}_verify` as Module1Task,
   tasks: m.id === 1 ? [
     { id: "task1_1" as Module1Task, label: "Map the Middlemen" },
@@ -394,16 +401,44 @@ function MercuryWorkspace({
 }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarHovered, setSidebarHovered] = useState(false);
-  const sidebarExpanded = !sidebarCollapsed || sidebarHovered;
+  const [tempDisableHover, setTempDisableHover] = useState(false);
+  const sidebarExpanded = !sidebarCollapsed || (sidebarHovered && !tempDisableHover);
 
   const [expandedModule, setExpandedModule] = useState<number>(() => {
     const match = task.match(/^task(\d+)_/);
     return match ? parseInt(match[1]) : 1;
   });
   const [urlAnimating, setUrlAnimating] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [canGoBack, setCanGoBack] = useState(false);
+  const [canGoForward, setCanGoForward] = useState(false);
+  const [currentSubStep, setCurrentSubStep] = useState<string>("");
+
+  useEffect(() => {
+    const handleStateChange = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail) {
+        if (typeof detail.canGoBack === "boolean") setCanGoBack(detail.canGoBack);
+        if (typeof detail.canGoForward === "boolean") setCanGoForward(detail.canGoForward);
+        if (typeof detail.currentStep === "string") setCurrentSubStep(detail.currentStep);
+      }
+    };
+    window.addEventListener("cosmos-x-nav-state", handleStateChange);
+    return () => {
+      window.removeEventListener("cosmos-x-nav-state", handleStateChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    setCanGoBack(false);
+    setCanGoForward(false);
+    setCurrentSubStep("");
+  }, [task]);
+
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const currentUrl = getUrlForTask(task);
+  const baseTaskUrl = getUrlForTask(task);
+  const currentUrl = currentSubStep ? `${baseTaskUrl}/${currentSubStep}` : baseTaskUrl;
 
   // Auto-expand the module the task belongs to
   useEffect(() => {
@@ -416,12 +451,14 @@ function MercuryWorkspace({
   }, [task]);
 
   const isTaskDone = (taskId: Module1Task) => {
-    const current = MODULE1_TASKS.indexOf(task);
-    const target = MODULE1_TASKS.indexOf(taskId);
-    return current > target;
+    if (taskId === "story") {
+      return MODULE1_TASKS.indexOf(task) > MODULE1_TASKS.indexOf("story");
+    }
+    const scores = getTaskScores();
+    return scores[taskId]?.passed === true;
   };
   const isModuleDone = (id: number) => completedModuleIds.includes(id);
-  const isModuleUnlocked = (id: number) => id <= currentActiveModuleId;
+  const isModuleUnlocked = (id: number) => true;
 
   const activeModDef = MODULES.find((m) => {
     const match = task.match(/^task(\d+)_/);
@@ -430,10 +467,22 @@ function MercuryWorkspace({
   const accentColor = activeModDef?.color ?? "#22d3ee";
 
   return (
-    <div className="h-screen bg-[#030711] text-white flex flex-col overflow-hidden w-full relative z-10">
-      {/* Starfield */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,white_0.7px,transparent_0.7px)] bg-size-[28px_28px] opacity-[0.06]" />
+    <div className="h-full bg-transparent text-white flex flex-col overflow-hidden w-full relative z-10">
+      <style>{`
+        @keyframes sparkle-sweep {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+        .sparkle-line {
+          background-size: 200% 100% !important;
+          animation: sparkle-sweep 2.5s linear infinite;
+        }
+      `}</style>
+      {/* Background container matching landing page background */}
+      <div className="absolute inset-0 z-0 pointer-events-none" style={{
+        background: `radial-gradient(ellipse 80% 60% at 20% 10%, oklch(0.28 0.08 275 / 0.35), transparent 60%), radial-gradient(ellipse 70% 50% at 85% 90%, oklch(0.32 0.1 210 / 0.22), transparent 60%), linear-gradient(180deg, oklch(0.13 0.04 265) 0%, oklch(0.09 0.03 265) 100%)`
+      }}>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(4,8,22,0.65)_100%)] opacity-40" />
       </div>
 
       {/* ── WORKSPACE HEADER ── */}
@@ -443,45 +492,140 @@ function MercuryWorkspace({
           className="flex items-center gap-1.5 text-slate-400 hover:text-white transition font-mono text-[10px] group"
         >
           <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
-          MERCURY
+          MERCURY ORBIT
         </button>
 
         <div className="w-px h-4 bg-white/10" />
 
-        <div className="flex items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: accentColor }} />
-          <span className="font-mono text-[10px] font-bold uppercase tracking-widest" style={{ color: accentColor }}>
-            {task.match(/^task(\d+)_(\d+)$/) ? `Module ${task.match(/^task(\d+)_(\d+)$/)![1].padStart(2,"0")} · Task ${task.match(/^task(\d+)_(\d+)$/)![2]}` :
-             task.match(/^task(\d+)_verify$/) ? `Module ${task.match(/^task(\d+)_verify$/)![1].padStart(2,"0")} · Verification` :
-             task === "final_challenge" ? "Final Mission · Escape Room" :
-             task === "completed" ? "Mercury Complete" : "Sandbox"}
-          </span>
+        <div className="flex items-center select-none">
+          {(() => {
+            const moduleTaskMatch = task.match(/^task(\d+)_(\d+)$/);
+            const verifyMatch = task.match(/^task(\d+)_verify$/);
+            
+            if (moduleTaskMatch) {
+              const modNum = moduleTaskMatch[1].padStart(2, "0");
+              const taskNum = moduleTaskMatch[2];
+              return (
+                <div className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border bg-slate-950/40 text-[9.5px] font-mono tracking-widest"
+                  style={{ borderColor: `${accentColor}25` }}>
+                  <span className="text-slate-400 font-medium">MODULE {modNum}</span>
+                  <span className="w-px h-3 bg-white/20" />
+                  <span className="font-extrabold" style={{ color: accentColor }}>TASK {taskNum}</span>
+                </div>
+              );
+            }
+            
+            if (verifyMatch) {
+              const modNum = verifyMatch[1].padStart(2, "0");
+              return (
+                <div className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border bg-slate-950/40 text-[9.5px] font-mono tracking-widest"
+                  style={{ borderColor: `${accentColor}25` }}>
+                  <span className="text-slate-400 font-medium">MODULE {modNum}</span>
+                  <span className="w-px h-3 bg-white/20" />
+                  <span className="font-extrabold" style={{ color: accentColor }}>VERIFICATION</span>
+                </div>
+              );
+            }
+            
+            if (task === "final_challenge") {
+              return (
+                <div className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border bg-slate-950/40 text-[9.5px] font-mono tracking-widest"
+                  style={{ borderColor: `${accentColor}25` }}>
+                  <span className="text-slate-400 font-medium">FINAL MISSION</span>
+                  <span className="w-px h-3 bg-white/20" />
+                  <span className="font-extrabold" style={{ color: accentColor }}>ESCAPE ROOM</span>
+                </div>
+              );
+            }
+            
+            const label = task === "completed" ? "MERCURY COMPLETE" : "SANDBOX";
+            return (
+              <div className="flex items-center px-3.5 py-1.5 rounded-full border bg-slate-950/40 text-[9.5px] font-mono tracking-widest"
+                style={{ borderColor: `${accentColor}25` }}>
+                <span className="font-extrabold" style={{ color: accentColor }}>{label}</span>
+              </div>
+            );
+          })()}
         </div>
 
-        {/* Module progress ticks */}
-        <div className="ml-auto hidden md:flex items-center gap-1">
-          {MODULES.map((mod) => {
-            const done = isModuleDone(mod.id);
-            const active = mod.id === currentActiveModuleId;
+        {/* Task progress capsules */}
+        <div className="ml-auto hidden md:flex items-center gap-1.5">
+          {(activeModDef?.tasks || []).map((t) => {
+            const isDone = isTaskDone(t.id);
+            const isActive = task === t.id;
+            const neonBlue = "#00e5ff";
             return (
-              <div key={mod.id} className="w-4 h-1.5 rounded-sm border transition-all duration-500"
+              <div key={t.id} className="w-4 h-1.5 rounded-sm border transition-all duration-500"
                 style={{
-                  backgroundColor: done ? "#10b981" : active ? `${mod.color}30` : "transparent",
-                  borderColor: done ? "#10b981" : active ? mod.color : "rgba(255,255,255,0.1)",
-                  boxShadow: done ? "0 0 5px rgba(16,185,129,0.6)" : active ? `0 0 4px ${mod.color}70` : "none",
+                  backgroundColor: isDone ? neonBlue : isActive ? `${neonBlue}30` : "transparent",
+                  borderColor: isDone ? neonBlue : isActive ? neonBlue : "rgba(0,229,255,0.15)",
+                  boxShadow: isDone ? `0 0 6px ${neonBlue}` : isActive ? `0 0 4px ${neonBlue}60` : "none",
                 }}
-                title={`Module ${mod.num}`}
+                title={t.label}
               />
             );
           })}
         </div>
 
-        <button onClick={() => { resetMercuryProgress(); onBack(); }}
+        <button onClick={() => setShowResetConfirm(true)}
           className="flex items-center gap-1.5 text-[9px] font-mono text-rose-400 hover:text-rose-300 bg-rose-500/8 hover:bg-rose-500/15 px-2.5 py-1.5 rounded-lg border border-rose-500/20 hover:border-rose-500/40 transition shrink-0">
           <RotateCcw className="w-3 h-3" />
           <span className="hidden sm:block">RESET</span>
         </button>
       </header>
+
+      {/* Reset confirmation modal */}
+      <AnimatePresence>
+        {showResetConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-[#0b1329] border border-white/10 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-[0_25px_50px_rgba(0,0,0,0.8)] relative"
+            >
+              <div className="flex flex-col items-center text-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400">
+                  <RotateCcw className="w-5 h-5 animate-spin" style={{ animationDuration: "3s" }} />
+                </div>
+                <div>
+                  <h3 className="font-rushblade text-lg text-white">RESET MODULE?</h3>
+                  <p className="text-[11px] text-slate-400 font-mono leading-relaxed mt-2 uppercase tracking-wide">
+                    Are you sure you want to reset the current module progress? This will clear all task answers and starts you from the beginning.
+                  </p>
+                </div>
+                <div className="flex gap-3 w-full mt-2">
+                  <button
+                    onClick={() => {
+                      const activeModuleId = (() => {
+                        const match = task.match(/^task(\d+)_/);
+                        return match ? parseInt(match[1]) : 1;
+                      })();
+                      const nextTask = resetModuleProgress(activeModuleId);
+                      onTaskChange(nextTask);
+                      setShowResetConfirm(false);
+                    }}
+                    className="flex-1 py-2.5 rounded-xl text-[10px] font-rushblade font-bold text-slate-950 bg-rose-400 hover:bg-rose-300 transition duration-200 uppercase tracking-widest cursor-pointer"
+                  >
+                    YES, RESET
+                  </button>
+                  <button
+                    onClick={() => setShowResetConfirm(false)}
+                    className="flex-1 py-2.5 rounded-xl text-[10px] font-rushblade font-bold text-white bg-slate-900 border border-white/10 hover:bg-slate-800 transition duration-200 uppercase tracking-widest cursor-pointer"
+                  >
+                    NO, CANCEL
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── BODY: SIDEBAR + BROWSER ── */}
       <div className="flex flex-1 min-h-0 relative z-10 w-full">
@@ -489,7 +633,10 @@ function MercuryWorkspace({
         {/* ── LEFT MODULE SIDEBAR ── */}
         <aside
           onMouseEnter={() => setSidebarHovered(true)}
-          onMouseLeave={() => setSidebarHovered(false)}
+          onMouseLeave={() => {
+            setSidebarHovered(false);
+            setTempDisableHover(false);
+          }}
           className={`shrink-0 border-r border-white/8 bg-[#060d1a]/80 backdrop-blur-md flex flex-col overflow-hidden transition-all duration-300 ease-in-out relative z-30 ${
             sidebarExpanded ? "w-60" : "w-16"
           }`}
@@ -513,12 +660,18 @@ function MercuryWorkspace({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setSidebarCollapsed(!sidebarCollapsed);
+                      if (sidebarExpanded) {
+                        setSidebarCollapsed(true);
+                        setSidebarHovered(false);
+                        setTempDisableHover(true);
+                      } else {
+                        setSidebarCollapsed(false);
+                      }
                     }}
                     className="ml-auto w-5 h-5 rounded-md flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/5 transition shrink-0"
                     title={sidebarCollapsed ? "Pin Sidebar" : "Collapse Sidebar"}
                   >
-                    {sidebarCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
+                    <ChevronLeft className="w-3.5 h-3.5" />
                   </button>
                 </>
               )}
@@ -529,8 +682,8 @@ function MercuryWorkspace({
                   <span>{completedModuleIds.length}/8 done</span>
                   <span>{Math.round((completedModuleIds.length / 8) * 100)}%</span>
                 </div>
-                <div className="h-0.5 bg-white/5 rounded-full overflow-hidden">
-                  <div className="h-full rounded-full" style={{ width: `${Math.round((completedModuleIds.length / 8) * 100)}%`, background: `linear-gradient(90deg, ${accentColor}70, ${accentColor})` }} />
+                <div className="h-0.5 bg-white/5 rounded-full overflow-hidden relative">
+                  <div className="h-full rounded-full sparkle-line" style={{ width: `${Math.round((completedModuleIds.length / 8) * 100)}%`, background: `linear-gradient(90deg, ${accentColor}40, ${accentColor} 50%, ${accentColor}40)`, boxShadow: `0 0 8px ${accentColor}` }} />
                 </div>
               </div>
             )}
@@ -560,29 +713,18 @@ function MercuryWorkspace({
                       unlocked ? "hover:bg-white/5" : "opacity-35 cursor-not-allowed"
                     }`}
                   >
-                    {sidebarExpanded ? (
-                      <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 text-[9px] font-mono font-bold border transition-all"
-                        style={{
-                          borderColor: done ? "rgba(52,211,153,0.4)" : currentTaskInMod ? `${mod.color}50` : unlocked ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)",
-                          color: done ? "#34d399" : currentTaskInMod ? mod.color : unlocked ? "#94a3b8" : "#374151",
-                          backgroundColor: done ? "rgba(52,211,153,0.1)" : currentTaskInMod ? `${mod.color}15` : "transparent",
-                        }}
-                      >
-                        {done ? "✓" : !unlocked ? <Lock className="w-2.5 h-2.5" /> : mod.num}
-                      </div>
-                    ) : (
-                      <div className="w-8 h-8 flex items-center justify-center shrink-0">
-                        {renderModuleIcon(mod.iconName, unlocked, done ? "#34d399" : mod.color, "w-4.5 h-4.5")}
-                      </div>
-                    )}
+                    <div className="w-8 h-8 flex items-center justify-center shrink-0">
+                      {renderModuleIcon(mod.iconName, unlocked, mod.color, "w-4.5 h-4.5")}
+                    </div>
                     {sidebarExpanded && (
                       <>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[8px] font-mono uppercase tracking-wider truncate" style={{ color: unlocked ? mod.color : "#374151" }}>
+                          <p className="text-[8px] font-mono uppercase tracking-wider truncate flex items-center" style={{ color: unlocked ? mod.color : "#374151" }}>
                             MODULE {mod.num}
+                            {done && <span className="text-emerald-400 font-bold ml-1">✓</span>}
                           </p>
                           <p className={`text-[10px] truncate mt-0.5 ${currentTaskInMod ? "text-white font-medium" : unlocked ? "text-slate-400" : "text-slate-700"}`}>
-                            {mod.title}
+                            {mod.topic}
                           </p>
                         </div>
                         <ChevronRight className={`w-3 h-3 shrink-0 transition-transform ${isExpanded ? "rotate-90" : ""} ${unlocked ? "text-slate-500" : "text-slate-800"}`} />
@@ -601,8 +743,12 @@ function MercuryWorkspace({
                               <button key={t.id} onClick={() => { onTaskChange(t.id); setSidebarCollapsed(false); }}
                                 className="w-full text-left px-2.5 py-1.5 rounded-lg flex items-center gap-2 transition-all hover:bg-white/5"
                               >
-                                <span className="w-1.5 h-1.5 rounded-full shrink-0"
-                                  style={{ backgroundColor: tDone ? "#34d399" : tActive ? mod.color : "rgba(255,255,255,0.15)" }} />
+                                {tDone ? (
+                                  <span className="text-emerald-400 font-bold text-[10px] shrink-0 w-3 h-3 flex items-center justify-center">✓</span>
+                                ) : (
+                                  <span className="w-1.5 h-1.5 rounded-full shrink-0"
+                                    style={{ backgroundColor: tActive ? mod.color : "rgba(255,255,255,0.15)" }} />
+                                )}
                                 <span className="font-mono text-[10px] truncate"
                                   style={{ color: tActive ? mod.color : tDone ? "#34d399" : "#64748b", fontWeight: tActive ? "700" : "400" }}>
                                   {t.label}
@@ -620,12 +766,12 @@ function MercuryWorkspace({
 
             {/* Final challenge */}
             <button
-              disabled={completedModuleIds.length < 8}
+              disabled={false}
               onClick={() => { onTaskChange("final_challenge"); setSidebarCollapsed(false); }}
               className={`w-full flex items-center rounded-xl text-left border transition-all ${
                 sidebarExpanded ? "gap-2 px-2.5 py-2 mt-1" : "justify-center p-2 mt-2"
               } ${
-                completedModuleIds.length >= 8 ? "border-rose-400/20 bg-rose-500/8 hover:bg-rose-500/12" : "border-transparent opacity-25 cursor-not-allowed"
+                completedModuleIds.length >= 0 ? "border-rose-400/20 bg-rose-500/8 hover:bg-rose-500/12" : "border-transparent opacity-25 cursor-not-allowed"
               }`}
             >
               <div className="w-6 h-6 rounded-lg border border-rose-400/30 bg-rose-500/15 flex items-center justify-center text-rose-400 shrink-0">
@@ -640,21 +786,6 @@ function MercuryWorkspace({
             </button>
           </nav>
 
-          {/* NOVA */}
-          <div className={`mx-2 mb-2 rounded-xl border border-violet-400/20 bg-violet-400/5 shrink-0 transition-all duration-300 ${sidebarExpanded ? "p-2.5" : "p-2.5 flex justify-center"}`}>
-            <div className="flex items-center gap-1.5 w-full justify-center">
-              <Bot className="w-4 h-4 text-violet-300 shrink-0" />
-              {sidebarExpanded && (
-                <>
-                  <span className="text-[8px] font-mono text-violet-300 uppercase tracking-wider min-w-0 truncate">NOVA · AI Guide</span>
-                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                </>
-              )}
-            </div>
-            {sidebarExpanded && (
-              <p className="text-[9px] text-slate-400 leading-relaxed mt-1">{getNovaHint(task)}</p>
-            )}
-          </div>
         </aside>
 
         {/* ── VIRTUAL BROWSER (content only) ── */}
@@ -682,13 +813,31 @@ function MercuryWorkspace({
 
               {/* Nav buttons */}
               <div className="flex gap-0.5 shrink-0">
-                <button className="w-6 h-6 rounded-md flex items-center justify-center text-slate-600 hover:text-slate-400 hover:bg-white/5 transition">
+                <button
+                  disabled={!canGoBack}
+                  onClick={() => window.dispatchEvent(new CustomEvent("cosmos-x-nav-back"))}
+                  className={`w-6 h-6 rounded-md flex items-center justify-center transition ${
+                    canGoBack ? "text-slate-400 hover:text-white hover:bg-white/5 cursor-pointer" : "text-slate-800 cursor-not-allowed"
+                  }`}
+                  title="Back"
+                >
                   <ArrowLeft className="w-3 h-3" />
                 </button>
-                <button className="w-6 h-6 rounded-md flex items-center justify-center text-slate-700 cursor-not-allowed">
+                <button
+                  disabled={!canGoForward}
+                  onClick={() => window.dispatchEvent(new CustomEvent("cosmos-x-nav-forward"))}
+                  className={`w-6 h-6 rounded-md flex items-center justify-center transition ${
+                    canGoForward ? "text-slate-400 hover:text-white hover:bg-white/5 cursor-pointer" : "text-slate-800 cursor-not-allowed"
+                  }`}
+                  title="Forward"
+                >
                   <ArrowRight className="w-3 h-3" />
                 </button>
-                <button className="w-6 h-6 rounded-md flex items-center justify-center text-slate-600 hover:text-slate-400 hover:bg-white/5 transition">
+                <button
+                  onClick={() => window.dispatchEvent(new CustomEvent("cosmos-x-nav-reset"))}
+                  className="w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5 transition cursor-pointer"
+                  title="Reset Subtask"
+                >
                   <RefreshCw className="w-3 h-3" />
                 </button>
               </div>
@@ -715,7 +864,7 @@ function MercuryWorkspace({
           </div>
 
           {/* Page content */}
-          <div ref={contentRef} className="flex-1 overflow-y-auto min-h-0 relative z-10 p-4">
+          <div ref={contentRef} className="flex-1 overflow-y-auto min-h-0 relative z-10 p-0">
             <AnimatePresence mode="wait">
               {task === "story" && (
                 <motion.div key="story" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="h-full">
@@ -740,7 +889,7 @@ function MercuryWorkspace({
 
               {/* Module Intro Card */}
               {showIntro && currentModuleDef && (
-                <motion.div key={`intro-${introModuleId}`} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="h-full flex flex-col justify-between">
+                <motion.div key={`intro-${introModuleId}`} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="h-full w-full flex flex-col min-h-0">
                   <ModuleIntroCard
                     moduleId={introModuleId!}
                     moduleTitle={currentModuleDef.title}
@@ -817,11 +966,12 @@ function MercuryWorkspace({
                   </div>
                   <div className="flex gap-3">
                     <button onClick={handleLaunchRocket}
-                      className="px-7 py-3 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-sm rounded-xl transition-all shadow-[0_0_30px_rgba(251,191,36,0.4)] hover:scale-[1.02]">
-                      Back to Solar System
+                      className="inline-flex items-center justify-center gap-1.5 px-6 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-[0_0_30px_rgba(251,191,36,0.4)] hover:scale-[1.02] cursor-pointer">
+                      <span>Back to Solar System</span>
                     </button>
-                    <Link to="/planets/$planet" params={{ planet: "venus" }} className="px-6 py-3 bg-violet-500/20 border border-violet-400/30 text-violet-300 hover:bg-violet-500/30 font-semibold text-sm rounded-xl transition-all">
-                      Enter Venus ➔
+                    <Link to="/planets/$planet" params={{ planet: "venus" }} className="inline-flex items-center justify-center gap-1.5 px-6 py-2.5 bg-violet-500/20 border border-violet-400/30 text-violet-300 hover:bg-violet-500/30 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer">
+                      <span>Enter Venus</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
                     </Link>
                   </div>
                 </motion.div>
@@ -844,8 +994,9 @@ export default function MercuryModule() {
 
   const match = task.match(/^task(\d)_1$/);
   const introModuleId = match ? parseInt(match[1]) : null;
-  const showIntro = introModuleId !== null && introModuleId >= 2 && introModuleId <= 8 && !acknowledgedIntros[introModuleId];
+  const showIntro = false;
   const currentModuleDef = showIntro ? MERCURY_CURRICULUM.find(m => m.id === introModuleId) : null;
+  const [showProfile, setShowProfile] = useState(false);
 
   const activeTaskInfo = (() => {
     for (const mod of MERCURY_CURRICULUM) {
@@ -994,19 +1145,9 @@ export default function MercuryModule() {
     setIsLaunching(true);
   };
 
-  const getCompletedModuleIds = (currentTask: Module1Task): number[] => {
-    const ids: number[] = [];
-    const idx = MODULE1_TASKS.indexOf(currentTask);
-    
-    if (idx >= 5) ids.push(1);
-    if (idx >= 9) ids.push(2);
-    if (idx >= 13) ids.push(3);
-    if (idx >= 17) ids.push(4);
-    if (idx >= 21) ids.push(5);
-    if (idx >= 25) ids.push(6);
-    if (idx >= 29) ids.push(7);
-    if (idx >= 33) ids.push(8);
-    return ids;
+  const getCompletedModuleIds = (_currentTask: Module1Task): number[] => {
+    // Use verified modules from localStorage as source of truth
+    return getVerifiedModules();
   };
 
   const completedModuleIds = getVerifiedModules();
@@ -1075,12 +1216,13 @@ export default function MercuryModule() {
   };
 
   return (
-    <main className="h-screen bg-[#040816] text-white relative flex flex-col justify-between overflow-hidden">
-      {/* Background Starfield */}
-      <div className="fixed inset-0 z-0 select-none pointer-events-none">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,white_0.8px,transparent_0.8px)] bg-size-[24px_24px] opacity-15" />
+    <main className="h-screen bg-transparent text-white relative flex flex-col justify-between overflow-hidden">
+      {/* Background container matching landing page background */}
+      <div className="fixed inset-0 z-0 select-none pointer-events-none" style={{
+        background: `radial-gradient(ellipse 80% 60% at 20% 10%, oklch(0.28 0.08 275 / 0.35), transparent 60%), radial-gradient(ellipse 70% 50% at 85% 90%, oklch(0.32 0.1 210 / 0.22), transparent 60%), linear-gradient(180deg, oklch(0.13 0.04 265) 0%, oklch(0.09 0.03 265) 100%)`
+      }}>
         <div className="absolute inset-0 bg-linear-to-tr from-cyan-950/10 via-transparent to-transparent" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(4,8,22,0.65)_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(4,8,22,0.65)_100%)] opacity-80" />
       </div>
 
       {/* Top Header */}
@@ -1107,12 +1249,12 @@ export default function MercuryModule() {
               </h1>
             </div>
             <p className="text-[9px] text-cyan-400/80 font-mono tracking-wider mt-0.5 select-none hover:text-cyan-400 transition-all">
-              cosmosx://planet-1/mercury/blockchain-foundations<span className="text-cyan-600/75">?lat=28.59n&amp;lon=80.68w&amp;freq=1420.4mhz</span>
+              cosmosx://mercury/blockchain-foundations
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-4">
           <div className="hidden md:flex flex-col items-end text-right font-mono text-[9px] text-muted-foreground select-none">
             <div className="flex items-center gap-1.5 font-bold tracking-wider">
               <span className="text-cyan-400">MERCURY PROGRESS:</span>
@@ -1129,7 +1271,7 @@ export default function MercuryModule() {
                     key={idx}
                     className={`w-3.5 h-1.5 rounded-sm border transition-all duration-500 ${
                       isSegmentDone
-                        ? "bg-emerald-500 border-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.6)]"
+                        ? "bg-[#00FF66] border-[#00FF66] shadow-[0_0_8px_rgba(0,255,102,0.65)]"
                         : isSegmentActive
                           ? "bg-cyan-500/30 border-cyan-400 animate-pulse shadow-[0_0_4px_rgba(6,182,212,0.3)]"
                           : "bg-slate-950 border-white/10"
@@ -1140,21 +1282,23 @@ export default function MercuryModule() {
               })}
             </div>
           </div>
-          
-          <div className="hidden sm:block h-6 w-px bg-white/10" />
 
+          <div className="h-8 w-px bg-white/10 hidden md:block" />
+
+          {/* Profile Dossier Toggle */}
           <button
-            onClick={handleReset}
-            className="group flex items-center gap-1 text-[9px] font-mono text-rose-400 hover:text-rose-300 transition bg-rose-500/5 hover:bg-rose-500/10 px-3 py-2 rounded-md border border-rose-500/20 hover:border-rose-500/50 relative overflow-hidden shadow-[inset_0_1px_1px_rgba(239,68,68,0.02)]"
+            onClick={() => setShowProfile(true)}
+            className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-cyan-400 transition bg-slate-900/60 hover:bg-slate-900/90 px-3.5 py-2 rounded-full border border-white/10 hover:border-cyan-500/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] cursor-pointer"
           >
-            <RotateCcw className="w-3 h-3 group-hover:rotate-[-60deg] transition-transform duration-300" />
-            <span className="font-semibold tracking-wider">RESET SECTOR</span>
-            <div className="absolute inset-x-0 bottom-0 h-px bg-linear-to-r from-transparent via-rose-500/50 to-transparent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
+            <Bot className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="font-mono text-[9px] uppercase tracking-wider font-bold">AGENT PROFILE</span>
           </button>
         </div>
       </header>
       {/* Main Grid Content */}
-      <div className="flex-1 px-4 lg:px-8 py-3 w-full relative z-10 flex flex-col justify-center min-h-0 overflow-hidden">
+      <div className={`flex-1 w-full relative z-10 flex flex-col min-h-0 overflow-hidden ${
+        activeModule === null ? "px-4 lg:px-8 py-3 justify-center" : "p-0"
+      }`}>
         <AnimatePresence mode="wait">
           {activeModule === null ? (
             /* 1. COMPLETED CIRCULAR MAGNETIC ORBIT EXPEDITION MAP */
@@ -1193,6 +1337,17 @@ export default function MercuryModule() {
                     }`}
                   />
                 </div>
+
+                {/* Orbital Path Ring (behind modules) */}
+                <div
+                  style={{
+                    width: baseRadius * 2,
+                    height: baseRadius * 2,
+                    border: "1px solid rgba(34, 211, 238, 0.12)",
+                    boxShadow: "0 0 25px rgba(34, 211, 238, 0.04), inset 0 0 25px rgba(34, 211, 238, 0.04)"
+                  }}
+                  className="absolute top-1/2 left-1/2 rounded-full pointer-events-none z-0 transform -translate-x-1/2 -translate-y-1/2"
+                />
 
                 {/* Left Area Dashboard text headers */}
                 <div className="absolute top-0 left-0 z-10 select-none">
@@ -1233,21 +1388,22 @@ export default function MercuryModule() {
                         repeat: Infinity,
                         ease: "easeInOut"
                       }}
-                      className="bg-linear-to-r from-red-700 to-rose-600 text-white border border-red-500 px-4 py-2.5 rounded-xl text-[10.5px] font-mono font-bold tracking-widest uppercase cursor-pointer pointer-events-auto flex items-center gap-2 relative overflow-hidden"
+                      className="bg-linear-to-r from-red-700 to-rose-600 text-white border border-red-500 px-4 py-2.5 rounded-xl text-[10.5px] font-mono font-bold tracking-widest uppercase cursor-pointer pointer-events-auto flex items-center justify-center gap-1.5 relative overflow-hidden"
                     >
                       <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.08)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.08)_50%,rgba(255,255,255,0.08)_75%,transparent_75%,transparent)] bg-size-[15px_15px] animate-pulse" />
                       <Rocket className="w-3.5 h-3.5 relative z-10 animate-bounce" />
-                      <span className="relative z-10">ENTER RESCUE MISSION ➔</span>
+                      <span className="relative z-10">ENTER RESCUE MISSION</span>
+                      <ArrowRight className="w-3.5 h-3.5 relative z-10" />
                     </motion.button>
                   )}
                 </div>
 
                 {/* Glassy bubbles rendered dynamically in circular orbit */}
                 <div className="absolute inset-0 z-10 pointer-events-none">
-                  {MERCURY_EXPEDITION_MODULES.map((mod) => {
+                  {MODULES.map((mod) => {
                     const isCompleted = completedModuleIds.includes(mod.id);
                     const isActive = mod.id === currentActiveModuleId;
-                    const isUnlocked = mod.id === 1 || isCompleted || isActive;
+                    const isUnlocked = true;
                     const isSelected = selectedModuleId === mod.id;
 
                     // Trig: module position on orbit ring
@@ -1281,7 +1437,7 @@ export default function MercuryModule() {
                           onMouseLeave={() => {
                             hoverTimeoutRef.current = setTimeout(() => {
                               setSelectedModuleId(null);
-                            }, 400); // 400ms delay to allow clicking tasks
+                            }, 800); // 800ms delay to allow clicking tasks
                           }}
                           style={{
                             translateX: "-50%",
@@ -1300,6 +1456,11 @@ export default function MercuryModule() {
                             {/* Glass bubble module button */}
                             <div className="relative group">
                               <button
+                                onClick={() => {
+                                  if (isUnlocked) {
+                                    handleLaunchModule(mod.id);
+                                  }
+                                }}
                                 style={{
                                   borderColor: isUnlocked ? `${mod.color}60` : `${mod.color}30`,
                                   color: isUnlocked ? mod.color : `${mod.color}80`,
@@ -1381,119 +1542,7 @@ export default function MercuryModule() {
                               The motion.div translate(-50%,-50%) puts its top-left at
                               (-24,-24) relative to orbital center, so capsule coords
                               need to be relative to (24, 24) = center of the 48px box. */}
-                          <AnimatePresence>
-                            {isSelected && (
-                              <>
-                                {Array.from({ length: 3 }).map((_, taskIdx) => {
-                                  const taskNum = taskIdx + 1;
-
-                                  // Fixed arc: Task2 at 12 o'clock (-90°), Task1 at ~10 o'clock (-128°), Task3 at ~2 o'clock (-52°)
-                                  const taskAngle = -90 + (taskIdx - 1) * 38;
-                                  const taskRad = (taskAngle * Math.PI) / 180;
-
-                                  // 42px from module center = just outside the 48px neon ring edge
-                                  const SATELLITE_ARC_RADIUS = 42;
-
-                                  // Offset from motion.div center (24,24)
-                                  const tlx = 24 + SATELLITE_ARC_RADIUS * Math.cos(taskRad);
-                                  const tly = 24 + SATELLITE_ARC_RADIUS * Math.sin(taskRad);
-
-                                  const getIsTaskCompleted = (mId: number, tNum: number): boolean => {
-                                    const currentIdx = MODULE1_TASKS.indexOf(task);
-                                    if (currentIdx === -1) return false;
-                                    if (task === "completed") return true;
-                                    if (task === "final_challenge") return true;
-                                    const targetTaskKey = `task${mId}_${tNum}`;
-                                    const targetIdx = MODULE1_TASKS.indexOf(targetTaskKey as Module1Task);
-                                    return currentIdx > targetIdx;
-                                  };
-                                  const isTaskCompleted = getIsTaskCompleted(mod.id, taskNum);
-                                  const isTaskUnlocked = mod.id <= currentActiveModuleId;
-
-                                  return (
-                                    <motion.div
-                                      key={taskIdx}
-                                      initial={{ scale: 0, opacity: 0 }}
-                                      animate={{ scale: 1, opacity: 1 }}
-                                      exit={{ scale: 0, opacity: 0 }}
-                                      transition={{
-                                        type: "spring",
-                                        stiffness: 300,
-                                        damping: 15,
-                                        delay: taskIdx * 0.05,
-                                      }}
-                                      className="absolute flex items-center justify-center pointer-events-none"
-                                      style={{
-                                        left: tlx,
-                                        top: tly,
-                                        translateX: "-50%",
-                                        translateY: "-50%",
-                                        zIndex: 50,
-                                        width: "32px",
-                                        height: "32px",
-                                      }}
-                                    >
-                                      {/* Space capsule docking pod shape */}
-                                      <div className="absolute pointer-events-none flex items-center justify-center">
-                                        <svg width="28" height="18" viewBox="0 0 28 18" fill="none" className="overflow-visible">
-                                          <path
-                                            d="M 5,1 L 23,1 L 27,9 L 23,17 L 5,17 L 1,9 Z"
-                                            fill={isTaskCompleted ? "#021a10" : "#070a13"}
-                                            stroke={isTaskUnlocked ? (isTaskCompleted ? "#00FF66" : mod.color) : `${mod.color}25`}
-                                            strokeWidth="1.2"
-                                            style={{
-                                              filter: isTaskUnlocked
-                                                ? isTaskCompleted
-                                                  ? "drop-shadow(0 0 5px rgba(0,255,102,0.85))"
-                                                  : `drop-shadow(0 0 3px ${mod.color}50)`
-                                                : "none",
-                                            }}
-                                          />
-                                          <path
-                                            d="M 8,4 L 20,4 M 8,14 L 20,14"
-                                            stroke={isTaskUnlocked ? (isTaskCompleted ? "rgba(0,255,102,0.25)" : `${mod.color}20`) : `${mod.color}08`}
-                                            strokeWidth="0.8"
-                                          />
-                                          <circle cx="5.5" cy="4" r="0.5" fill={isTaskUnlocked ? (isTaskCompleted ? "#00FF66" : `${mod.color}50`) : `${mod.color}15`} />
-                                          <circle cx="22.5" cy="4" r="0.5" fill={isTaskUnlocked ? (isTaskCompleted ? "#00FF66" : `${mod.color}50`) : `${mod.color}15`} />
-                                          <circle cx="22.5" cy="14" r="0.5" fill={isTaskUnlocked ? (isTaskCompleted ? "#00FF66" : `${mod.color}50`) : `${mod.color}15`} />
-                                          <circle cx="5.5" cy="14" r="0.5" fill={isTaskUnlocked ? (isTaskCompleted ? "#00FF66" : `${mod.color}50`) : `${mod.color}15`} />
-                                        </svg>
-                                      </div>
-                                      <motion.button
-                                        whileHover={isTaskUnlocked ? { scale: 1.12 } : undefined}
-                                        whileTap={isTaskUnlocked ? { scale: 0.92 } : undefined}
-                                        style={{
-                                          width: "16px",
-                                          height: "16px",
-                                          cursor: isTaskUnlocked ? "pointer" : "not-allowed",
-                                          color: isTaskUnlocked
-                                            ? isTaskCompleted ? "#00FF66" : mod.color
-                                            : `${mod.color}30`,
-                                          textShadow: isTaskUnlocked
-                                            ? isTaskCompleted
-                                              ? "0 0 5px rgba(0,255,102,0.95)"
-                                              : `0 0 4px ${mod.color}`
-                                            : "none",
-                                          zIndex: 60,
-                                        }}
-                                        className="rounded-full flex items-center justify-center font-mono text-[9px] font-bold pointer-events-auto bg-transparent border-0 select-none"
-                                        onClick={() => {
-                                          if (!isTaskUnlocked) return;
-                                          setActiveModule(mod.id);
-                                          const taskKey = `task${mod.id}_${taskNum}` as Module1Task;
-                                          handleNextTask(taskKey);
-                                        }}
-                                        title={isTaskUnlocked ? `Task ${mod.id}.${taskNum}` : "Locked"}
-                                      >
-                                        {taskNum}
-                                      </motion.button>
-                                    </motion.div>
-                                  );
-                                })}
-                              </>
-                            )}
-                          </AnimatePresence>
+                          {/* Task Satellite Crown removed to immediately enter learning workspace upon clicking the module */}
                         </motion.div>
                       </div>
                     );
@@ -1549,6 +1598,101 @@ export default function MercuryModule() {
       {isLaunching && (
         <PlanetTransition targetPlanet="Venus" onComplete={() => router.navigate({ to: "/" })} />
       )}
+
+      {/* Profile Modal */}
+      <AnimatePresence>
+        {showProfile && (
+          <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/60 backdrop-blur-sm">
+            {/* Backdrop click to close */}
+            <div className="absolute inset-0" onClick={() => setShowProfile(false)} />
+
+            {/* Slide-over panel */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="relative w-full max-w-md h-full bg-[#050914] border-l border-white/10 p-6 shadow-2xl flex flex-col justify-between overflow-y-auto z-50 text-white"
+            >
+              <div className="space-y-6">
+                {/* Header */}
+                <div className="flex justify-between items-center border-b border-white/10 pb-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-cyan-500/10 border border-cyan-400/30 flex items-center justify-center">
+                      <Bot className="w-4 h-4 text-cyan-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-rushblade text-white text-[13px] tracking-widest uppercase">Agent Dossier</h3>
+                      <p className="text-[9px] font-mono text-cyan-400/70 mt-0.5">AGENT_ID: COSMOSX_MERCURY_01</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowProfile(false)}
+                    className="text-slate-400 hover:text-white font-mono text-[10px] uppercase border border-white/10 hover:border-white/20 rounded px-2.5 py-1 transition cursor-pointer"
+                  >
+                    Close
+                  </button>
+                </div>
+
+                {/* Agent Status Stats */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-xl border border-white/5 bg-slate-900/35 p-3">
+                    <span className="font-mono text-[8px] text-slate-500 uppercase block tracking-wider">Verification Level</span>
+                    <span className="font-rushblade text-sm text-cyan-400 block mt-1">Lvl {completedModuleIds.length}</span>
+                  </div>
+                  <div className="rounded-xl border border-white/5 bg-slate-900/35 p-3">
+                    <span className="font-mono text-[8px] text-slate-500 uppercase block tracking-wider">Expedition Score</span>
+                    <span className="font-rushblade text-sm text-[#10b981] block mt-1">+{completedModuleIds.length * 100} XP</span>
+                  </div>
+                </div>
+
+                {/* Earned Badges Section */}
+                <div className="space-y-3">
+                  <h4 className="font-rushblade text-slate-400 text-[10px] uppercase tracking-wider">Honors & Earned Badges</h4>
+                  
+                  <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
+                    {(() => {
+                      const earnedIds = getEarnedBadges();
+                      const earnedList = Object.values(MODULE_BADGES).filter(b => earnedIds.includes(b.id));
+
+                      if (earnedList.length === 0) {
+                        return (
+                          <div className="rounded-xl border border-dashed border-white/5 p-8 text-center text-slate-600 font-mono text-[10px]">
+                            ⚠️ No badges earned yet. Complete verification gates to unlock rare honors.
+                          </div>
+                        );
+                      }
+
+                      return earnedList.map((badge) => (
+                        <div
+                          key={badge.id}
+                          className="p-3.5 rounded-xl border border-amber-500/20 bg-amber-500/5 flex gap-3 relative overflow-hidden shadow-[0_0_12px_rgba(251,191,36,0.06)] text-left"
+                        >
+                          <div className="absolute top-0 right-0 px-2 py-0.5 rounded-bl bg-amber-500/20 border-l border-b border-amber-500/30 text-[8px] font-mono text-amber-400 uppercase tracking-widest font-bold">
+                            {badge.rarity}
+                          </div>
+                          <div className="text-2xl mt-1 select-none shrink-0">{badge.icon}</div>
+                          <div>
+                            <h5 className="font-rushblade text-amber-400 text-[11px] uppercase tracking-wider">{badge.name}</h5>
+                            <p className="text-[9.5px] text-slate-300 font-mono leading-relaxed mt-1">{badge.description}</p>
+                          </div>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                </div>
+              </div>
+
+              {/* Reset Progress Option Description */}
+              <div className="border-t border-white/10 pt-4 mt-6">
+                <p className="text-[9px] text-slate-500 font-mono leading-relaxed text-left">
+                  Badges are permanent records of your blockchain intelligence. Resetting progress clears earned module keys and local dossiers.
+                </p>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Footer */}
       <footer className="relative z-10 border-t border-white/10 bg-slate-950/60 py-2.5 text-center">

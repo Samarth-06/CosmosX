@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-
+import { ArrowRight } from "lucide-react";
 interface TerminalSimProps {
   currentTask: string;
   onCompleteTask: () => void;
@@ -275,9 +275,10 @@ export default function TerminalSim({ currentTask, onCompleteTask }: TerminalSim
           <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="mt-4 flex justify-end">
             <button
               onClick={onCompleteTask}
-              className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-4 py-2 rounded-lg shadow-lg hover:shadow-emerald-500/20 transition-all uppercase tracking-wider text-[10px] font-rushblade"
+              className="inline-flex items-center justify-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-4 py-2 rounded-lg shadow-lg hover:shadow-emerald-500/20 transition-all uppercase tracking-wider text-[10px] font-rushblade cursor-pointer"
             >
-              Analyze Architecture Decision ➔
+              <span>Analyze Architecture Decision</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </motion.div>
         )}

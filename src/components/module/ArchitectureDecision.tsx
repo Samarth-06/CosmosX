@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, AlertTriangle, HelpCircle } from "lucide-react";
+import { CheckCircle2, AlertTriangle, HelpCircle, ArrowRight } from "lucide-react";
 
 interface ArchitectureDecisionProps {
   onComplete: () => void;
@@ -346,9 +346,10 @@ export default function ArchitectureDecision({ onComplete }: ArchitectureDecisio
                   <div className="flex justify-end">
                     <button
                       onClick={onComplete}
-                      className="bg-linear-to-r from-primary to-primary-glow text-primary-foreground font-bold px-5 py-2.5 rounded-full text-xs shadow-lg hover:shadow-[0_0_20px_var(--color-primary)] transition"
+                      className="inline-flex items-center justify-center gap-1.5 bg-linear-to-r from-primary to-primary-glow text-primary-foreground font-bold px-5 py-2.5 rounded-full text-xs shadow-lg hover:shadow-[0_0_20px_var(--color-primary)] transition cursor-pointer"
                     >
-                      Begin Flight Systems Review ➔
+                      <span>Begin Flight Systems Review</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </motion.div>

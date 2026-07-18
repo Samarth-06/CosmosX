@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, XCircle, ArrowRight, ChevronRight, Trophy, Star, Shield, AlertTriangle, Zap, Lock, Globe, RotateCcw } from "lucide-react";
 import { saveTaskScore } from "@/lib/module1-store";
@@ -127,52 +127,52 @@ function CentralizedPaymentFlowSVG({ nodeOffline }: { nodeOffline: string | null
   return (
     <svg viewBox="0 0 360 160" className="w-full h-full" style={{ filter: "drop-shadow(0 0 8px rgba(239,68,68,0.1))" }}>
       <defs>
-        <marker id="arrowRed" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-          <path d="M 0 2 L 10 5 L 0 8 z" fill="#ef4444" />
+        <marker id="arrowRed" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 2.5 L 7 5 L 0 7.5 z" fill="#ef4444" />
         </marker>
-        <marker id="arrowCyan" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-          <path d="M 0 2 L 10 5 L 0 8 z" fill="#22d3ee" />
+        <marker id="arrowCyan" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 2.5 L 7 5 L 0 7.5 z" fill="#22d3ee" />
         </marker>
       </defs>
 
       {/* Nodes */}
-      <g transform="translate(30, 80)">
-        <circle r="16" fill="#1e1b4b" stroke="#6366f1" strokeWidth="1.5" />
-        <text y="4" textAnchor="middle" fill="#c4b5fd" fontSize="9" fontFamily="monospace" fontWeight="bold">YOU</text>
+      <g transform="translate(35, 80)">
+        <circle r="18" fill="#1e1b4b" stroke="#6366f1" strokeWidth="1.5" />
+        <text y="3.5" textAnchor="middle" fill="#ffffff" fontSize="8" fontFamily="monospace" fontWeight="bold">YOU</text>
       </g>
 
-      <g transform="translate(110, 80)">
-        <circle r="18" fill={nodeOffline === "bankA" ? "#311" : "#0d1e2e"} stroke={nodeOffline === "bankA" ? "#ef4444" : "#22d3ee"} strokeWidth="1.5" style={{ transition: "all 0.5s" }} />
+      <g transform="translate(112, 80)">
+        <circle r="20" fill={nodeOffline === "bankA" ? "#311" : "#0d1e2e"} stroke={nodeOffline === "bankA" ? "#ef4444" : "#22d3ee"} strokeWidth="1.5" style={{ transition: "all 0.5s" }} />
         {nodeOffline === "bankA" && <text y="4" textAnchor="middle" fill="#ef4444" fontSize="12" fontWeight="bold">✕</text>}
-        {nodeOffline !== "bankA" && <text y="4" textAnchor="middle" fill="#22d3ee" fontSize="8" fontFamily="monospace">Bank A</text>}
+        {nodeOffline !== "bankA" && <text y="3.5" textAnchor="middle" fill="#ffffff" fontSize="8" fontFamily="monospace" fontWeight="bold">Bank A</text>}
       </g>
 
       <g transform="translate(180, 80)">
-        <circle r="18" fill={nodeOffline === "upi" ? "#311" : "#111827"} stroke={nodeOffline === "upi" ? "#ef4444" : "#8b5cf6"} strokeWidth="1.5" style={{ transition: "all 0.5s" }} />
+        <circle r="20" fill={nodeOffline === "upi" ? "#311" : "#111827"} stroke={nodeOffline === "upi" ? "#ef4444" : "#8b5cf6"} strokeWidth="1.5" style={{ transition: "all 0.5s" }} />
         {nodeOffline === "upi" && <text y="4" textAnchor="middle" fill="#ef4444" fontSize="12" fontWeight="bold">✕</text>}
-        {nodeOffline !== "upi" && <text y="4" textAnchor="middle" fill="#a78bfa" fontSize="8" fontFamily="monospace">UPI</text>}
+        {nodeOffline !== "upi" && <text y="3.5" textAnchor="middle" fill="#ffffff" fontSize="8.5" fontFamily="monospace" fontWeight="bold">UPI</text>}
       </g>
 
-      <g transform="translate(250, 80)">
-        <circle r="18" fill={nodeOffline === "bankB" ? "#311" : "#0d1e2e"} stroke={nodeOffline === "bankB" ? "#ef4444" : "#22d3ee"} strokeWidth="1.5" style={{ transition: "all 0.5s" }} />
+      <g transform="translate(248, 80)">
+        <circle r="20" fill={nodeOffline === "bankB" ? "#311" : "#0d1e2e"} stroke={nodeOffline === "bankB" ? "#ef4444" : "#22d3ee"} strokeWidth="1.5" style={{ transition: "all 0.5s" }} />
         {nodeOffline === "bankB" && <text y="4" textAnchor="middle" fill="#ef4444" fontSize="12" fontWeight="bold">✕</text>}
-        {nodeOffline !== "bankB" && <text y="4" textAnchor="middle" fill="#22d3ee" fontSize="8" fontFamily="monospace">Bank B</text>}
+        {nodeOffline !== "bankB" && <text y="3.5" textAnchor="middle" fill="#ffffff" fontSize="8" fontFamily="monospace" fontWeight="bold">Bank B</text>}
       </g>
 
-      <g transform="translate(330, 80)">
-        <circle r="16" fill="#1e1b4b" stroke="#6366f1" strokeWidth="1.5" />
-        <text y="4" textAnchor="middle" fill="#c4b5fd" fontSize="9" fontFamily="monospace" fontWeight="bold">FRIEND</text>
+      <g transform="translate(325, 80)">
+        <circle r="18" fill="#1e1b4b" stroke="#6366f1" strokeWidth="1.5" />
+        <text y="3.5" textAnchor="middle" fill="#ffffff" fontSize="8" fontFamily="monospace" fontWeight="bold">FRIEND</text>
       </g>
 
       {/* Edges */}
-      <line x1="46" y1="80" x2="92" y2="80" stroke={nodeOffline === "bankA" ? "#ef4444" : "#22d3ee"} strokeWidth="1.5" markerEnd={nodeOffline === "bankA" ? "url(#arrowRed)" : "url(#arrowCyan)"} />
-      <line x1="128" y1="80" x2="162" y2="80" stroke={nodeOffline === "bankA" || nodeOffline === "upi" ? "#ef4444" : "#8b5cf6"} strokeWidth="1.5" markerEnd={nodeOffline === "bankA" || nodeOffline === "upi" ? "url(#arrowRed)" : "url(#arrowCyan)"} />
-      <line x1="198" y1="80" x2="232" y2="80" stroke={nodeOffline === "upi" || nodeOffline === "bankB" ? "#ef4444" : "#8b5cf6"} strokeWidth="1.5" markerEnd={nodeOffline === "upi" || nodeOffline === "bankB" ? "url(#arrowRed)" : "url(#arrowCyan)"} />
-      <line x1="268" y1="80" x2="314" y2="80" stroke={nodeOffline === "bankB" ? "#ef4444" : "#22d3ee"} strokeWidth="1.5" markerEnd={nodeOffline === "bankB" ? "url(#arrowRed)" : "url(#arrowCyan)"} />
+      <line x1="55" y1="80" x2="86" y2="80" stroke={nodeOffline === "bankA" ? "#ef4444" : "#22d3ee"} strokeWidth="1.5" markerEnd={nodeOffline === "bankA" ? "url(#arrowRed)" : "url(#arrowCyan)"} />
+      <line x1="134" y1="80" x2="154" y2="80" stroke={nodeOffline === "bankA" || nodeOffline === "upi" ? "#ef4444" : "#8b5cf6"} strokeWidth="1.5" markerEnd={nodeOffline === "bankA" || nodeOffline === "upi" ? "url(#arrowRed)" : "url(#arrowCyan)"} />
+      <line x1="202" y1="80" x2="222" y2="80" stroke={nodeOffline === "upi" || nodeOffline === "bankB" ? "#ef4444" : "#8b5cf6"} strokeWidth="1.5" markerEnd={nodeOffline === "upi" || nodeOffline === "bankB" ? "url(#arrowRed)" : "url(#arrowCyan)"} />
+      <line x1="270" y1="80" x2="301" y2="80" stroke={nodeOffline === "bankB" ? "#ef4444" : "#22d3ee"} strokeWidth="1.5" markerEnd={nodeOffline === "bankB" ? "url(#arrowRed)" : "url(#arrowCyan)"} />
 
       {/* Hops text */}
-      <text x="180" y="30" textAnchor="middle" fill="#ef4444" fontSize="8" fontFamily="monospace" tracking-wider>3 INTERMEDIARY HOPS (FEE + RISK)</text>
-      <text x="180" y="145" textAnchor="middle" fill="rgba(148,163,184,0.5)" fontSize="7" fontFamily="monospace">Each hop maintains an isolated ledger copy</text>
+      <text x="180" y="30" textAnchor="middle" fill="#ef4444" fontSize="10" fontFamily="monospace" tracking-wider>3 INTERMEDIARY HOPS (FEE + RISK)</text>
+      <text x="180" y="145" textAnchor="middle" fill="rgba(148,163,184,0.5)" fontSize="8.5" fontFamily="monospace">Each hop maintains an isolated ledger copy</text>
     </svg>
   );
 }
@@ -181,11 +181,11 @@ function DirectPaymentFlowSVG({ offline }: { offline: boolean }) {
   return (
     <svg viewBox="0 0 360 160" className="w-full h-full" style={{ filter: "drop-shadow(0 0 8px rgba(16,185,129,0.1))" }}>
       <defs>
-        <marker id="arrowGreen" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-          <path d="M 0 2 L 10 5 L 0 8 z" fill="#10b981" />
+        <marker id="arrowGreen" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 2.5 L 7 5 L 0 7.5 z" fill="#10b981" />
         </marker>
-        <marker id="arrowRedD" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-          <path d="M 0 2 L 10 5 L 0 8 z" fill="#ef4444" />
+        <marker id="arrowRedD" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 2.5 L 7 5 L 0 7.5 z" fill="#ef4444" />
         </marker>
       </defs>
 
@@ -193,26 +193,26 @@ function DirectPaymentFlowSVG({ offline }: { offline: boolean }) {
       <g transform="translate(60, 80)">
         <circle r="20" fill="#064e3b" stroke={offline ? "#ef4444" : "#10b981"} strokeWidth="1.5" style={{ transition: "all 0.5s" }} />
         {offline && <text y="4" textAnchor="middle" fill="#ef4444" fontSize="12" fontWeight="bold">✕</text>}
-        {!offline && <text y="4" textAnchor="middle" fill="#a7f3d0" fontSize="9" fontFamily="monospace" fontWeight="bold">YOU</text>}
+        {!offline && <text y="3.5" textAnchor="middle" fill="#ffffff" fontSize="8.5" fontFamily="monospace" fontWeight="bold">YOU</text>}
       </g>
 
       <g transform="translate(300, 80)">
         <circle r="20" fill="#064e3b" stroke="#10b981" strokeWidth="1.5" />
-        <text y="4" textAnchor="middle" fill="#a7f3d0" fontSize="9" fontFamily="monospace" fontWeight="bold">FRIEND</text>
+        <text y="3.5" textAnchor="middle" fill="#ffffff" fontSize="8.5" fontFamily="monospace" fontWeight="bold">FRIEND</text>
       </g>
 
       {/* Edge */}
-      <line x1="80" y1="80" x2="280" y2="80" stroke={offline ? "#ef4444" : "#10b981"} strokeWidth="2" strokeDasharray={offline ? "4 4" : "none"} markerEnd={offline ? "url(#arrowRedD)" : "url(#arrowGreen)"} style={{ transition: "all 0.5s" }} />
+      <line x1="82" y1="80" x2="274" y2="80" stroke={offline ? "#ef4444" : "#10b981"} strokeWidth="2" strokeDasharray={offline ? "4 4" : "none"} markerEnd={offline ? "url(#arrowRedD)" : "url(#arrowGreen)"} style={{ transition: "all 0.5s" }} />
 
       {!offline && (
         <circle r="4" fill="#67e8f9">
-          <animateMotion dur="2s" repeatCount="indefinite" path="M80,80 L280,80" />
+          <animateMotion dur="2s" repeatCount="indefinite" path="M82,80 L274,80" />
         </circle>
       )}
 
       {/* Description text */}
-      <text x="180" y="30" textAnchor="middle" fill="#10b981" fontSize="9" fontFamily="monospace" tracking-wider>DIRECT WALLET-TO-WALLET (0 MIDDLEMEN)</text>
-      <text x="180" y="145" textAnchor="middle" fill="rgba(148,163,184,0.5)" fontSize="7" fontFamily="monospace">Directly validated by distributed network consensus</text>
+      <text x="180" y="30" textAnchor="middle" fill="#10b981" fontSize="10" fontFamily="monospace" tracking-wider>DIRECT WALLET-TO-WALLET (0 MIDDLEMEN)</text>
+      <text x="180" y="145" textAnchor="middle" fill="rgba(148,163,184,0.5)" fontSize="8.5" fontFamily="monospace">Directly validated by distributed network consensus</text>
     </svg>
   );
 }
@@ -348,10 +348,62 @@ export default function Task1_1_MiddlemanMapper({ onComplete }: { onComplete: ()
   };
 
   const isStepUnlocked = (s: Step) => {
-    const idx = STEP_ORDER.indexOf(s);
-    if (idx === 0) return true;
-    return completedSteps.includes(STEP_ORDER[idx - 1]) || STEP_ORDER.indexOf(step) >= idx;
+    return true;
   };
+
+  const stepsOrder: Step[] = ["theory", "demo", "quiz", "game", "complete"];
+  const currentIdx = stepsOrder.indexOf(step);
+
+  useEffect(() => {
+    const notifyState = () => {
+      const urlMapping: Record<Step, string> = {
+        theory: "theory",
+        demo: "upi-vs-p2p-demo",
+        quiz: "knowledge-check",
+        game: "mapping-scanner",
+        complete: "verification",
+      };
+      
+      window.dispatchEvent(
+        new CustomEvent("cosmos-x-nav-state", {
+          detail: {
+            canGoBack: currentIdx > 0,
+            canGoForward: currentIdx < stepsOrder.length - 1 && isStepUnlocked(stepsOrder[currentIdx + 1]),
+            currentStep: urlMapping[step],
+          },
+        })
+      );
+    };
+    notifyState();
+
+    const handleBack = () => {
+      if (currentIdx > 0) {
+        setStep(stepsOrder[currentIdx - 1]);
+      }
+    };
+    const handleForward = () => {
+      if (currentIdx < stepsOrder.length - 1 && isStepUnlocked(stepsOrder[currentIdx + 1])) {
+        setStep(stepsOrder[currentIdx + 1]);
+      }
+    };
+    const handleReset = () => {
+      setSelections({});
+      setShowExplanations({});
+      setCurrentScenario(0);
+      setCompletedSteps([]);
+      setStep("theory");
+    };
+
+    window.addEventListener("cosmos-x-nav-back", handleBack);
+    window.addEventListener("cosmos-x-nav-forward", handleForward);
+    window.addEventListener("cosmos-x-nav-reset", handleReset);
+
+    return () => {
+      window.removeEventListener("cosmos-x-nav-back", handleBack);
+      window.removeEventListener("cosmos-x-nav-forward", handleForward);
+      window.removeEventListener("cosmos-x-nav-reset", handleReset);
+    };
+  }, [step, completedSteps, currentIdx]);
 
   // Scenario calculator
   const scenario = SCENARIOS[currentScenario];
@@ -428,7 +480,7 @@ export default function Task1_1_MiddlemanMapper({ onComplete }: { onComplete: ()
 
           {/* ── STEP 1: THEORY ── */}
           {step === "theory" && (
-            <motion.div key="theory" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-5 max-w-2xl">
+            <motion.div key="theory" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-6 w-full max-w-7xl">
               <div>
                 <p className="font-mono text-[8px] text-cyan-400 uppercase tracking-widest">Section 1: Core Theory</p>
                 <h2 className="text-xl font-bold text-white mt-0.5">The Toll of the Middleman</h2>
@@ -437,136 +489,155 @@ export default function Task1_1_MiddlemanMapper({ onComplete }: { onComplete: ()
                 </p>
               </div>
 
-              {/* Side-by-side payment route visualizer */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="rounded-xl border border-rose-500/20 bg-[#0b060f]/60 p-3 space-y-2">
-                  <span className="font-mono text-[8px] text-rose-400 uppercase tracking-wider block">Centralized Payment Clearing Hops</span>
-                  <div className="h-32 flex items-center justify-center">
-                    <CentralizedPaymentFlowSVG nodeOffline={null} />
+              {/* Two-column layout grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full">
+                
+                {/* Left Column: text cards, glossaries, and buttons */}
+                <div className="lg:col-span-6 space-y-4">
+                  {/* THM Style cards */}
+                  <div className="space-y-3">
+                    {THEORY_CARDS.map((card, i) => (
+                      <div key={i} className="rounded-xl border border-white/5 bg-slate-950/60 p-3.5 flex gap-3.5 relative overflow-hidden" style={{ borderLeft: `3px solid ${card.border}` }}>
+                        <div className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center" style={{ color: card.color, backgroundColor: card.bg }}>
+                          <Shield className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <span className="text-[8px] font-mono px-1 py-0.5 rounded" style={{ color: card.color, backgroundColor: card.bg }}>{card.tag}</span>
+                          <h4 className="text-xs font-bold text-white mt-1.5">{card.title}</h4>
+                          <p className="text-[11px] text-slate-300 leading-relaxed mt-1">{card.text}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
-                <div className="rounded-xl border border-emerald-500/20 bg-[#040e0a]/60 p-3 space-y-2">
-                  <span className="font-mono text-[8px] text-emerald-400 uppercase tracking-wider block">Decentralized Direct Settlement</span>
-                  <div className="h-32 flex items-center justify-center">
-                    <DirectPaymentFlowSVG offline={false} />
-                  </div>
-                </div>
-              </div>
 
-              {/* THM Style cards */}
-              <div className="space-y-3">
-                {THEORY_CARDS.map((card, i) => (
-                  <div key={i} className="rounded-xl border border-white/5 bg-slate-950/60 p-3.5 flex gap-3.5 relative overflow-hidden" style={{ borderLeft: `3px solid ${card.border}` }}>
-                    <div className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center" style={{ color: card.color, backgroundColor: card.bg }}>
-                      <Shield className="w-4 h-4" />
+                  {/* Key pills */}
+                  <div className="rounded-xl border border-white/8 bg-slate-950/40 p-4">
+                    <p className="font-mono text-[8px] text-slate-500 uppercase tracking-widest mb-2.5">Clearing Terminologies</p>
+                    <div className="flex flex-wrap gap-2">
+                      {GLOSSARY_TERMS.map((kt) => (
+                        <span key={kt.term} className="px-2.5 py-1 rounded-full text-[9px] font-mono border" style={{ borderColor: `${kt.color}30`, color: kt.color, backgroundColor: `${kt.color}08` }}>
+                          {kt.term}
+                        </span>
+                      ))}
                     </div>
-                    <div>
-                      <span className="text-[8px] font-mono px-1 py-0.5 rounded" style={{ color: card.color, backgroundColor: card.bg }}>{card.tag}</span>
-                      <h4 className="text-xs font-bold text-white mt-1.5">{card.title}</h4>
-                      <p className="text-[11px] text-slate-300 leading-relaxed mt-1">{card.text}</p>
+                  </div>
+
+                  <button onClick={() => goToStep("demo")} className="px-5 py-2.5 bg-cyan-400/20 border border-cyan-400/40 text-cyan-300 hover:bg-cyan-400/30 text-xs font-bold font-mono rounded-xl transition flex items-center gap-1">
+                    Explore UPI vs P2P Hops <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                {/* Right Column: Visual route comparison stacked vertically */}
+                <div className="lg:col-span-6 space-y-4">
+                  <div className="rounded-xl border border-rose-500/20 bg-[#0b060f]/60 p-4 space-y-3">
+                    <span className="font-mono text-[9px] text-rose-400 uppercase tracking-wider block">Centralized Payment Clearing Hops</span>
+                    <div className="h-40 flex items-center justify-center">
+                      <CentralizedPaymentFlowSVG nodeOffline={null} />
                     </div>
                   </div>
-                ))}
-              </div>
-
-              {/* Key pills */}
-              <div className="rounded-xl border border-white/8 bg-slate-950/40 p-4">
-                <p className="font-mono text-[8px] text-slate-500 uppercase tracking-widest mb-2.5">Clearing Terminologies</p>
-                <div className="flex flex-wrap gap-2">
-                  {GLOSSARY_TERMS.map((kt) => (
-                    <span key={kt.term} className="px-2.5 py-1 rounded-full text-[9px] font-mono border" style={{ borderColor: `${kt.color}30`, color: kt.color, backgroundColor: `${kt.color}08` }}>
-                      {kt.term}
-                    </span>
-                  ))}
+                  <div className="rounded-xl border border-emerald-500/20 bg-[#040e0a]/60 p-4 space-y-3">
+                    <span className="font-mono text-[9px] text-emerald-400 uppercase tracking-wider block">Decentralized Direct Settlement</span>
+                    <div className="h-40 flex items-center justify-center">
+                      <DirectPaymentFlowSVG offline={false} />
+                    </div>
+                  </div>
                 </div>
-              </div>
 
-              <button onClick={() => goToStep("demo")} className="px-5 py-2.5 bg-cyan-400/20 border border-cyan-400/40 text-cyan-300 hover:bg-cyan-400/30 text-xs font-bold font-mono rounded-xl transition flex items-center gap-1">
-                Explore UPI vs P2P Hops <ChevronRight className="w-3.5 h-3.5" />
-              </button>
+              </div>
             </motion.div>
           )}
 
           {/* ── STEP 2: DEMO ── */}
           {step === "demo" && (
-            <motion.div key="demo" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-5 max-w-2xl">
+            <motion.div key="demo" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-6 w-full max-w-7xl">
               <div>
                 <p className="font-mono text-[8px] text-cyan-400 uppercase tracking-widest">Section 2: Interactive Demo</p>
                 <h2 className="text-xl font-bold text-white mt-0.5">Toggle Hops & Outages</h2>
                 <p className="text-xs text-slate-400 mt-1">Select a clearing model, click structural nodes to shut them down, and observe the payment clearance outcome.</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                {(["upi", "p2p"] as const).map((m) => (
-                  <button key={m} onClick={() => { setDemoMode(m); setDemoOfflineNode(null); setDemoP2POffline(false); }}
-                    className={`rounded-xl border p-3.5 text-left transition-all ${
-                      demoMode === m
-                        ? m === "upi" ? "border-rose-400/50 bg-rose-500/10" : "border-emerald-400/50 bg-emerald-500/10"
-                        : "border-white/10 hover:bg-white/3"
-                    }`}
-                  >
-                    <span className="text-xl">{m === "upi" ? "🏦" : "📱"}</span>
-                    <h4 className="text-xs font-bold text-white mt-1">{m === "upi" ? "UPI Clearing Hops (Centralized)" : "Direct P2P Settlement (Decentralized)"}</h4>
-                    <p className="text-[10px] text-slate-400 mt-0.5">{m === "upi" ? "Uses 3 intermediate nodes. If 1 fails, settlement stops." : "Zero intermediates. Resilient against middle node outage."}</p>
+              {/* Two-column layout grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full">
+                
+                {/* Left Column: Selectors, alerts, triggers and quiz button */}
+                <div className="lg:col-span-5 space-y-4">
+                  {/* Selectors grid */}
+                  <div className="flex flex-col gap-3">
+                    {(["upi", "p2p"] as const).map((m) => (
+                      <button key={m} onClick={() => { setDemoMode(m); setDemoOfflineNode(null); setDemoP2POffline(false); }}
+                        className={`rounded-xl border p-3.5 text-left transition-all cursor-pointer ${
+                          demoMode === m
+                            ? m === "upi" ? "border-rose-400/50 bg-rose-500/10" : "border-emerald-400/50 bg-emerald-500/10"
+                            : "border-white/10 hover:bg-white/3"
+                        }`}
+                      >
+                        <span className="text-xl">{m === "upi" ? "🏦" : "📱"}</span>
+                        <h4 className="text-xs font-bold text-white mt-1">{m === "upi" ? "UPI Clearing Hops (Centralized)" : "Direct P2P Settlement (Decentralized)"}</h4>
+                        <p className="text-[10px] text-slate-400 mt-0.5">{m === "upi" ? "Uses 3 intermediate nodes. If 1 fails, settlement stops." : "Zero intermediates. Resilient against middle node outage."}</p>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Status outcome textbox */}
+                  <div className={`rounded-xl p-3.5 text-[11px] font-mono border ${
+                    demoOfflineNode || demoP2POffline
+                      ? "bg-rose-500/10 border-rose-500/20 text-rose-200"
+                      : "bg-white/5 border-white/5 text-slate-400"
+                  }`}>
+                    {demoMode === "upi" ? (
+                      demoOfflineNode
+                        ? `⚠ Alert: Middle node ${demoOfflineNode.toUpperCase()} went offline. Ledger update message blocked. Transaction failed.`
+                        : "Click on Bank A, UPI, or Bank B node buttons below to simulate a node crash:"
+                    ) : (
+                      demoP2POffline
+                        ? "⚠ Alert: Sender went offline or has no balance. Transaction aborted."
+                        : "P2P nodes communicate directly. Click Sender to toggle your own online state:"
+                    )}
+                  </div>
+
+                  {/* Node trigger buttons */}
+                  <div className="flex flex-wrap gap-2">
+                    {demoMode === "upi" ? (
+                      (["bankA", "upi", "bankB"] as const).map((node) => (
+                        <button key={node} onClick={() => setDemoOfflineNode(node === demoOfflineNode ? null : node)}
+                          className={`px-3 py-1.5 rounded-xl border text-[10px] font-mono transition-all cursor-pointer ${
+                            demoOfflineNode === node ? "bg-rose-500/20 border-rose-400 text-rose-300" : "border-white/10 hover:bg-white/5 text-slate-400"
+                          }`}
+                        >
+                          Crash {node === "bankA" ? "Bank A" : node === "upi" ? "UPI Router" : "Bank B"}
+                        </button>
+                      ))
+                    ) : (
+                      <button onClick={() => setDemoP2POffline(!demoP2POffline)}
+                        className={`px-3 py-1.5 rounded-xl border text-[10px] font-mono transition-all cursor-pointer ${
+                          demoP2POffline ? "bg-rose-500/20 border-rose-400 text-rose-300" : "border-white/10 hover:bg-white/5 text-slate-400"
+                        }`}
+                      >
+                        Disconnect Sender
+                      </button>
+                    )}
+                    {(demoOfflineNode || demoP2POffline) && (
+                      <button onClick={() => { setDemoOfflineNode(null); setDemoP2POffline(false); }} className="px-3 py-1.5 bg-slate-800 border border-white/10 rounded-xl text-[10px] font-mono text-slate-400 hover:text-white cursor-pointer">
+                        Reset Outage
+                      </button>
+                    )}
+                  </div>
+
+                  <button onClick={() => goToStep("quiz")} className="w-full py-2.5 bg-cyan-400 text-slate-950 font-bold text-xs rounded-xl hover:bg-cyan-300 transition flex items-center justify-center gap-1 shadow-[0_0_15px_rgba(34,211,238,0.25)] cursor-pointer">
+                    Take the Quiz <ChevronRight className="w-4 h-4" />
                   </button>
-                ))}
-              </div>
+                </div>
 
-              <div className="rounded-xl border border-white/10 bg-slate-950/80 p-5 flex flex-col items-center justify-center min-h-[180px]">
-                {demoMode === "upi" ? (
-                  <CentralizedPaymentFlowSVG nodeOffline={demoOfflineNode} />
-                ) : (
-                  <DirectPaymentFlowSVG offline={demoP2POffline} />
-                )}
-
-                <div className={`w-full mt-4 rounded-xl p-3 text-[11px] font-mono border ${
-                  demoOfflineNode || demoP2POffline
-                    ? "bg-rose-500/10 border-rose-500/20 text-rose-200"
-                    : "bg-white/5 border-white/5 text-slate-400"
-                }`}>
+                {/* Right Column: Visual simulation viewer (span 7 columns) */}
+                <div className="lg:col-span-7 rounded-xl border border-white/10 bg-slate-950/80 p-5 flex flex-col items-center justify-center min-h-[220px] self-stretch">
                   {demoMode === "upi" ? (
-                    demoOfflineNode
-                      ? `⚠ Alert: Middle node ${demoOfflineNode.toUpperCase()} went offline. Ledger update message blocked. Transaction failed.`
-                      : "Click on Bank A, UPI, or Bank B node buttons below to simulate a node crash:"
+                    <CentralizedPaymentFlowSVG nodeOffline={demoOfflineNode} />
                   ) : (
-                    demoP2POffline
-                      ? "⚠ Alert: Sender went offline or has no balance. Transaction aborted."
-                      : "P2P nodes communicate directly. Click Sender to toggle your own online state:"
+                    <DirectPaymentFlowSVG offline={demoP2POffline} />
                   )}
                 </div>
-              </div>
 
-              {/* Node trigger buttons */}
-              <div className="flex flex-wrap justify-center gap-2">
-                {demoMode === "upi" ? (
-                  (["bankA", "upi", "bankB"] as const).map((node) => (
-                    <button key={node} onClick={() => setDemoOfflineNode(node === demoOfflineNode ? null : node)}
-                      className={`px-3 py-1.5 rounded-xl border text-[10px] font-mono transition-all ${
-                        demoOfflineNode === node ? "bg-rose-500/20 border-rose-400 text-rose-300" : "border-white/10 hover:bg-white/5 text-slate-400"
-                      }`}
-                    >
-                      Crash {node === "bankA" ? "Bank A" : node === "upi" ? "UPI Router" : "Bank B"}
-                    </button>
-                  ))
-                ) : (
-                  <button onClick={() => setDemoP2POffline(!demoP2POffline)}
-                    className={`px-3 py-1.5 rounded-xl border text-[10px] font-mono transition-all ${
-                      demoP2POffline ? "bg-rose-500/20 border-rose-400 text-rose-300" : "border-white/10 hover:bg-white/5 text-slate-400"
-                    }`}
-                  >
-                    Disconnect Sender
-                  </button>
-                )}
-                {(demoOfflineNode || demoP2POffline) && (
-                  <button onClick={() => { setDemoOfflineNode(null); setDemoP2POffline(false); }} className="px-3 py-1.5 bg-slate-800 border border-white/10 rounded-xl text-[10px] font-mono text-slate-400 hover:text-white">
-                    Reset Outage
-                  </button>
-                )}
               </div>
-
-              <button onClick={() => goToStep("quiz")} className="w-full py-2.5 bg-cyan-400 text-slate-950 font-bold text-xs rounded-xl hover:bg-cyan-300 transition flex items-center justify-center gap-1 shadow-[0_0_15px_rgba(34,211,238,0.25)]">
-                Take the Quiz <ChevronRight className="w-4 h-4" />
-              </button>
             </motion.div>
           )}
 
