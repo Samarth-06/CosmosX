@@ -51,8 +51,8 @@ export default function Nav() {
     <header className="fixed top-0 left-0 right-0 z-50">
       <div className="mx-auto mt-4 max-w-7xl px-4">
         <nav className="glass flex items-center justify-between rounded-full px-4 py-2.5 md:px-6">
-          <Link to="/" className="flex items-center gap-2.5 group flex-shrink-0">
-            <div className="h-8.5 w-8.5 overflow-hidden relative rounded-full border border-white/10 bg-slate-950 flex-shrink-0 flex items-center justify-center transition-all duration-300 shadow-[0_0_8px_rgba(6,182,212,0.1)] group-hover:border-cyan-500/30 group-hover:shadow-[0_0_12px_rgba(6,182,212,0.35)]">
+          <Link to="/" className="flex items-center gap-2.5 group shrink-0">
+            <div className="h-8.5 w-8.5 overflow-hidden relative rounded-full border border-white/10 bg-slate-950 shrink-0 flex items-center justify-center transition-all duration-300 shadow-[0_0_8px_rgba(6,182,212,0.1)] group-hover:border-cyan-500/30 group-hover:shadow-[0_0_12px_rgba(6,182,212,0.35)]">
               <img
                 src="/logo.jpg"
                 className="absolute w-[185%] h-[185%] max-w-none top-[-22%] left-[-42.5%] mix-blend-screen"
