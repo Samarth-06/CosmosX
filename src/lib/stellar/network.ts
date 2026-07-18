@@ -15,6 +15,14 @@ export const STELLAR_RPC_URL = import.meta.env.VITE_STELLAR_RPC_URL as string;
 export const ACHIEVEMENT_CONTRACT_ID = import.meta.env
   .VITE_ACHIEVEMENT_CONTRACT_ID as string;
 
+/** The deployed marketplace Soroban contract ID (from .env.local). */
+export const MARKETPLACE_CONTRACT_ID: string =
+  (import.meta.env.VITE_MARKETPLACE_CONTRACT_ID as string) ?? "";
+
+/** The XLM Stellar Asset Contract ID on the active Testnet network. */
+export const MARKETPLACE_TOKEN_ID: string =
+  (import.meta.env.VITE_MARKETPLACE_TOKEN_ID as string) ?? "";
+
 /** Stellar Expert base URL for the configured network (testnet vs public). */
 export const EXPLORER_BASE =
   STELLAR_NETWORK === "PUBLIC"
@@ -31,7 +39,15 @@ export function explorerContractUrl(contractId: string): string {
 
 if (!ACHIEVEMENT_CONTRACT_ID) {
   console.warn(
-    "[stellar] VITE_ACHIEVEMENT_CONTRACT_ID is not set — mint calls will fail. " +
+    "[stellar] VITE_ACHIEVEMENT_CONTRACT_ID is not set — achievement mint calls will fail. " +
       "Copy .env.testnet.example to .env.local and set the deployed contract ID.",
+  );
+}
+
+if (!MARKETPLACE_CONTRACT_ID || !MARKETPLACE_TOKEN_ID) {
+  console.debug(
+    "[stellar] VITE_MARKETPLACE_CONTRACT_ID / VITE_MARKETPLACE_TOKEN_ID not set — " +
+      "marketplace will run in local-state (stub) mode. " +
+      "Run contracts/marketplace/scripts/deploy-testnet.sh and update .env.local to enable on-chain trading.",
   );
 }

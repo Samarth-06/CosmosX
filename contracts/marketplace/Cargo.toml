@@ -1,0 +1,43 @@
+[package]
+name = "marketplace"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+# Only `rlib` here — deliberately NOT `cdylib`.
+#   * `cargo test` builds/links the rlib natively. On the Windows GNU toolchain,
+#     also building a native `cdylib` fails with "export ordinal too large"
+#     because Soroban's dep graph exports too many symbols through the mingw
+#     linker. The rlib has no such limit.
+#   * `stellar contract build` passes `--crate-type=cdylib` on the command line
+#     for the wasm32v1-none target, so the deployable .wasm is still produced —
+#     that build uses rust-lld (wasm), not the mingw linker, so it's unaffected.
+# (On an MSVC toolchain you could restore ["cdylib", "rlib"] safely.)
+crate-type = ["rlib"]
+
+[dependencies]
+soroban-sdk = "22"
+
+[dev-dependencies]
+soroban-sdk = { version = "22", features = ["testutils"] }
+
+# Standalone workspace so this Rust project stays fully isolated from the
+# CosmosX Node/Vite app and the achievement contract that surround it.
+[workspace]
+
+# ── Dependency version note ───────────────────────────────────────────────────
+# soroban-env-host v22.1.3 testutils.rs requires ed25519-dalek v2.x (not v3).
+# Cargo.lock is pinned via: cargo update ed25519-dalek --precise 2.1.1
+# This matches contracts/achievement/Cargo.lock and avoids the ChaCha20Rng
+# trait-bound compile error introduced by ed25519-dalek v3's CryptoRng change.
+
+[profile.release]
+opt-level = "z"
+overflow-checks = true
+debug = 0
+strip = "symbols"
+debug-assertions = false
+panic = "abort"
+codegen-units = 1
+lto = true

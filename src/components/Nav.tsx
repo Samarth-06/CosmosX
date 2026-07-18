@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Menu, Zap } from "lucide-react";
 import { useState, useEffect } from "react";
 import { getUserState, getUserLevel, type UserState } from "@/lib/user-store";
+import { WalletConnectButton } from "@/features/achievements/WalletConnectButton";
 
 const NAV_ITEMS = [
   { label: "Dashboard", to: "/dashboard" },
@@ -58,13 +59,9 @@ export default function Nav() {
                 <span>{level} ({userState.xp} XP)</span>
               </div>
             )}
-            <button className="hidden items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-[13px] font-medium text-foreground transition hover:bg-white/10 sm:inline-flex">
-              <span className="h-1.5 w-1.5 rounded-full bg-success shadow-[0_0_8px_currentColor]" />
-              Connect
-            </button>
-            <button className="rounded-full bg-linear-to-r from-primary to-primary-glow px-4 py-1.5 text-[13px] font-semibold text-primary-foreground shadow-[0_0_20px_-4px_var(--color-primary)] transition hover:shadow-[0_0_28px_-2px_var(--color-primary)]">
-              Sign in
-            </button>
+            <div className="hidden sm:block w-40">
+              <WalletConnectButton />
+            </div>
             <button
               onClick={() => setOpen((o) => !o)}
               className="rounded-full p-1.5 text-muted-foreground hover:bg-white/5 lg:hidden"
